@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小四數學：整除性大冒險 (2, 3, 5, 10)</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
+            background-color: #FFF9E6;
+            margin: 0;
+            padding: 20px;
+            color: #4A4A4A;
+            text-align: center;
+            user-select: none;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            border-radius: 40px;
+            padding: 40px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border: 8px solid #FFD166;
+            position: relative;
+            min-height: 650px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        h1 {
+            font-size: 54px;
+            color: #FF6B6B;
+            margin-top: 10px;
+            text-shadow: 2px 2px #FFE3E3;
+        }
+        h2 {
+            font-size: 42px;
+            color: #4EA8DE;
+        }
+        .text-large {
+            font-size: 36px;
+            line-height: 1.6;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .btn-large {
+            font-size: 36px;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 8px 0 #D9A014;
+            margin: 15px;
+        }
+        .btn-next {
+            background-color: #FFD166;
+            color: #4A4A4A;
+        }
+        .btn-next:hover {
+            transform: translateY(-3px);
+            background-color: #FFC033;
+        }
+        .btn-choice {
+            background-color: #4EA8DE;
+            color: white;
+            box-shadow: 0 8px 0 #0077B6;
+        }
+        .btn-choice:hover {
+            transform: scale(1.05);
+        }
+        .btn-danger {
+            background-color: #FF6B6B;
+            color: white;
+            box-shadow: 0 8px 0 #C94A4A;
+        }
+        .btn-large:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .step-panel {
+            display: none;
+            flex-grow: 1;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        .step-panel.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .flex-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .choco-box {
+            background: #F4A261;
+            border: 5px solid #E76F51;
+            border-radius: 20px;
+            padding: 20px;
+            width: 280px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .choco-box:hover {
+            transform: scale(1.05);
+        }
+        .choco-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+            justify-items: center;
+        }
+        .choco-dot {
+            width: 35px;
+            height: 35px;
+            background: #6C584C;
+            border-radius: 50%;
+            border: 3px solid #A06040;
+        }
+        .choco-dot.remainder {
+            background: #E63946;
+            border-color: #A81B26;
+        }
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            max-width: 700px;
+            margin: 20px auto;
+        }
+        .num-cell {
+            font-size: 32px;
+            font-weight: bold;
+            background: #E0AAFF;
+            padding: 15px 5px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 3px solid #C77DFF;
+            transition: all 0.2s;
+        }
+        .num-cell.highlight {
+            background: #FFD166 !important;
+            border-color: #FFB703 !important;
+            transform: scale(1.1);
+        }
+        .popup-info {
+            background: #E8F5E9;
+            border: 4px dashed #4CAF50;
+            border-radius: 20px;
+            padding: 25px;
+            font-size: 34px;
+            margin-top: 20px;
+            color: #2E7D32;
+            display: none;
+            width: 80%;
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .game-card {
+            font-size: 72px;
+            font-weight: bold;
+            background: #FFFFFF;
+            border: 6px solid #4EA8DE;
+            border-radius: 30px;
+            padding: 30px 60px;
+            margin: 20px;
+            display: inline-block;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .toast {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FF4D4D;
+            color: white;
+            font-size: 34px;
+            padding: 20px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 100;
+            font-weight: bold;
+        }
+        .score-board {
+            font-size: 38px;
+            font-weight: bold;
+            color: #FF6B6B;
+            margin-bottom: 15px;
+        }
+        .timer-bar-container {
+            width: 100%;
+            background: #E0E0E0;
+            height: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.1s linear, background-color 0.5s;
+        }
+        .badge {
+            font-size: 90px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast" id="toast">❌ 答錯囉！扣分！</div>
+
+    <div class="container">
+        <!-- 頁面 1: 歡迎首頁 -->
+        <div class="step-panel active" id="step-1">
+            <h1>🎒 整除性大冒險！</h1>
+            <div class="text-large">👋 各位小朋友，準備好挑戰數字的神秘規律了嗎？<br>點擊下方按鈕，一起出發吧！</div>
+            <button class="btn-large btn-next" onclick="nextStep(2)">✨ 開始冒險 ✨</button>
+        </div>
+
+        <!-- 頁面 2: 重點1 - 認識整除 -->
+        <div class="step-panel" id="step-2">
+            <h2>🍩 重點 1：朱古力大平分</h2>
+            <div class="text-large">👉 點擊其中一盒，猜猜哪一盒<b>會剩下</b>朱古力？</div>
+            <div class="flex-row">
+                <div class="choco-box" onclick="checkChoco(15, this)">
+                    <div class="text-large" style="color:white; margin:0;">🍫 A 盒 (15粒)</div>
+                    <div class="choco-grid" id="choco-15"></div>
+                </div>
+                <div class="choco-box" onclick="checkChoco(23, this)">
+                    <div class="text-large" style="color:white; margin:0;">🍫 B 盒 (23粒)</div>
+                    <div class="choco-grid" id="choco-23"></div>
+                </div>
+            </div>
+            <div class="popup-info" id="popup-2"></div>
+            <button class="btn-large btn-next" id="next-2" style="display:none;" onclick="nextStep(3)">下一步 ➡️</button>
+        </div>
+
+        <!-- 頁面 3: 重點2 - 2的整除性 -->
+        <div class="step-panel" id="step-3">
+            <h2>🔢 重點 2：2的魔法密碼</h2>
+            <div class="text-large">❓ 點擊下方按鈕，猜猜看被 <b>2整除</b> 的數字個位數是甚麼？</div>
+            <div class="number-grid" id="grid-2"></div>
+            <div class="flex-row">
+                <button class="btn-large btn-choice" onclick="checkSelect2('odd')">單數 (1,3,5,7,9)</button>
+                <button class="btn-large btn-choice" onclick="checkSelect2('even')">雙數 (0,2,4,6,8)</button>
+            </div>
+            <div class="popup-info" id="popup-3"></div>
+            <button class="btn-large btn-next" id="next-3" style="display:none;" onclick="nextStep(4)">下一步 ➡️</button>
+        </div>
+
+        <!-- 頁面 4: 重點3 - 5和10的整除性 -->
+        <div class="step-panel" id="step-4">
+            <h2>🌟 重點 3：5 與 10 的尾數規律</h2>
+            <div class="text-large">❓ 如果一個大數字能被 <b>10整除</b>，它的個位數必定是甚麼？</div>
+            <div class="flex-row">
+                <button class="btn-large btn-choice" onclick="checkSelect510(5)">肯定是 5</button>
+                <button class="btn-large btn-choice" onclick="checkSelect510(0)">肯定是 0</button>
+                <button class="btn-large btn-choice" onclick="checkSelect510(2)">可能是任何雙數</button>
+            </div>
+            <div class="popup-info" id="popup-4"></div>
+            <button class="btn-large btn-next" id="next-4" style="display:none;" onclick="nextStep(5)">下一步 ➡️</button>
+        </div>
+
+        <!-- 頁面 5: 重點4 - 3的整除性 -->
+        <div class="step-panel" id="step-5">
+            <h2>🧙‍♂️ 重點 4：3的神奇魔法</h2>
+            <div class="text-large">卡片上有個神祕數字：<b>69</b></div>
+            <div class="text-large">我們把它的各位數字加起來：<br><mark>6 + 9 = 15</mark></div>
+            <div class="text-large">❓ 請問得到的 <b>15</b> 可以被 3 整除嗎？</div>
+            <div class="flex-row">
+                <button class="btn-large btn-choice" onclick="checkSelect3(true)">⭕ 可以！</button>
+                <button class="btn-large btn-choice" onclick="checkSelect3(false)">❌ 不可以！</button>
+            </div>
+            <div class="popup-info" id="popup-5"></div>
+            <button class="btn-large btn-next" id="next-5" style="display:none;" onclick="nextStep(6)">前往遊戲模式 🎮</button>
+        </div>
+
+        <!-- 頁面 6: 選擇遊戲模式 -->
+        <div class="step-panel" id="step-6">
+            <h1>🎮 冒險結束！進入挑戰關卡</h1>
+            <div class="text-large">請選擇你想挑戰的遊戲模式：</div>
+            <div class="flex-row">
+                <button class="btn-large btn-choice" style="background:#4CAF50; box-shadow:0 8px 0 #388E3C;" onclick="startNormalGame()">🎯 模式 A：普通練習賽</button>
+                <button class="btn-large btn-danger" onclick="startCompGame()">⚡ 模式 B：限時競技場</button>
+            </div>
+        </div>
+
+        <!-- 頁面 7: 模式A - 普通練習賽 -->
+        <div class="step-panel" id="step-7">
+            <h2>🎯 模式 A：糖果普通練習賽</h2>
+            <div class="score-board">目前得分：<span id="normal-score">0</span> 分</div>
+            <div class="text-large" id="normal-question">請找出所有能被 X 整除的數字！</div>
+            <div class="flex-row" id="normal-cards"></div>
+            <button class="btn-large btn-next" onclick="nextNormalQuestion()">下一題 ➡️</button>
+            <button class="btn-large btn-choice" style="background:#9B59B6; box-shadow:0 8px 0 #8E44AD;" onclick="nextStep(6)">返回選單</button>
+        </div>
+
+        <!-- 頁面 8: 模式B - 限時競技場 -->
+        <div class="step-panel" id="step-8">
+            <h2>⚡ 模式 B：30秒極速競技場</h2>
+            <div class="score-board">得分：<span id="comp-score">0</span> 分</div>
+            <div class="timer-bar-container">
+                <div class="timer-bar" id="timer-bar"></div>
+            </div>
+            <div class="game-card" id="comp-card">---</div>
+            <div class="text-large" id="comp-question">它可以被 X 整除嗎？</div>
+            <div class="flex-row">
+                <button class="btn-large btn-choice" style="background:#2ECC71; box-shadow:0 8px 0 #27AE60;" onclick="submitCompAnswer(true)">⭕ 可以</button>
+                <button class="btn-large btn-danger" onclick="submitCompAnswer(false)">❌ 不可以</button>
+            </div>
+        </div>
+
+        <!-- 頁面 9: 結算畫面 -->
+        <div class="step-panel" id="step-9">
+            <h1>🏆 競技場挑戰結束！</h1>
+            <div class="text-large">你的最終得分是：<span id="final-score" style="color:#FF6B6B; font-size:50px;">0</span> 分</div>
+            <div class="badge" id="badge-icon">🥇</div>
+            <div class="text-large" id="badge-text">太厲害了！</div>
+            <button class="btn-large btn-next" onclick="nextStep(6)">再玩一次 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        
+        // 遊戲狀態變數
+        let normalScore = 0;
+        let compScore = 0;
+        let currentTarget = 2; // 被除數
+        let compTimer = null;
+        let timeLeft = 30;
+        let currentCompNum = 0;
+
+        function nextStep(step) {
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`step-${step}`).classList.add('active');
+            if(step === 2) initChoco();
+            if(step === 3) initGrid2();
+            if(step !== 8 && compTimer) clearInterval(compTimer);
+        }
+
+        function showToast(text, duration = 1500) {
+            const toast = document.getElementById('toast');
+            toast.innerText = text;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, duration);
+        }
+
+        // --- 重點 1: 朱古力初始化 ---
+        function initChoco() {
+            const c15 = document.getElementById('choco-15');
+            const c23 = document.getElementById('choco-23');
+            c15.innerHTML = ''; c23.innerHTML = '';
+            for(let i=0; i<15; i++) c15.innerHTML += '<div class="choco-dot"></div>';
+            for(let i=0; i<23; i++) {
+                if(i >= 20) c23.innerHTML += '<div class="choco-dot remainder"></div>';
+                else c23.innerHTML += '<div class="choco-dot"></div>';
+            }
+        }
+
+        function checkChoco(num, element) {
+            const popup = document.getElementById('popup-2');
+            popup.style.display = 'block';
+            if(num === 23) {
+                popup.innerHTML = "<b>🎉 答對了！</b><br>23 粒每 5 粒裝一盒：<br>算式：<mark>23 ÷ 5 = 4 ... 3</mark> (餘下3粒)<br>⚠️ 有餘數，所以23<b>不能</b>被5整除！";
+                document.getElementById('next-2').style.display = 'inline-block';
+            } else {
+                element.classList.add('shake');
+                popup.innerHTML = "<b>再想想看！</b><br>15 粒每 5 粒裝一盒：<br>算式：<mark>15 ÷ 5 = 3</mark> (剛好分完)<br>✨ 沒有餘數，所以15<b>可以</b>被5整除！";
+                setTimeout(() => element.classList.remove('shake'), 400);
+            }
+        }
+
+        // --- 重點 2: 2的整除性百數表 ---
+        function initGrid2() {
+            const grid = document.getElementById('grid-2');
+            grid.innerHTML = '';
+            for(let i=1; i<=30; i++) {
+                grid.innerHTML += `<div class="num-cell" id="cell-${i}">${i}</div>`;
+            }
+        }
+
+        function checkSelect2(type) {
+            const popup = document.getElementById('popup-3');
+            popup.style.display = 'block';
+            
+            // 高亮雙數
+            for(let i=1; i<=30; i++) {
+                const cell = document.getElementById(`cell-${i}`);
+                if(i % 2 === 0) cell.classList.add('highlight');
+                else cell.classList.remove('highlight');
+            }
+
+            if(type === 'even') {
+                popup.innerHTML = "<b>🎉 答案正確！雙數密碼！</b><br>所有能被 2 整除的數都是<b>雙數（偶數）</b>！<br>規律：個位數一定是 <b>0, 2, 4, 6, 8</b>！";
+                document.getElementById('next-3').style.display = 'inline-block';
+            } else {
+                popup.innerHTML = "<b>❌ 不對哦！單數會剩下餘數 1！</b><br>看看畫面上變黃色的數字，它們都是<b>雙數</b>！<br>規律：個位數一定是 <b>0, 2, 4, 6, 8</b>！";
+            }
+        }
+
+        // --- 重點 3: 5和10的整除性 ---
+        function checkSelect510(ans) {
+            const popup = document.getElementById('popup-4');
+            popup.style.display = 'block';
+            if(ans === 0) {
+                popup.innerHTML = "<b>🎉 太棒了！完全正確！</b><br>能被 10 整除的數，個位數必定是 <b>0</b>！<br>💡 額外知識：個位數是 0 或 5 的話，就能被 5 整除喔！";
+                document.getElementById('next-4').style.display = 'inline-block';
+            } else {
+                popup.innerHTML = "<b>❌ 答錯囉，再猜一次！</b><br>提示：10, 20, 30, 100... 它們的最後一個數字都是甚麼？";
+            }
+        }
+
+        // --- 重點 4: 3的整除性 ---
+        function checkSelect3(ans) {
+            const popup = document.getElementById('popup-5');
+            popup.style.display = 'block';
+            if(ans === true) {
+                popup.innerHTML = "<b>🎉 沒錯！15 ÷ 3 = 5，可以整除！</b><br>🧙‍♂️ 這就是3的魔法：如果一個數字的<b>各位數字加起來的和</b>能被3整除，那這個大數字本身就能被3整除！所以 69 可以被 3 整除！";
+                document.getElementById('next-5').style.display = 'inline-block';
+            } else {
+                popup.innerHTML = "<b>❌ 哎呀，算錯囉！</b><br>15 剛好在 3 的乘數表裡（3×5=15），所以可以被 3 整除！";
+            }
+        }
+
+        // ==================== 模式A：普通練習賽 ====================
+        const targets = [2, 3, 5, 10];
+        function startNormalGame() {
+            normalScore = 0;
+            document.getElementById('normal-score').innerText = normalScore;
+            nextNormalQuestion();
+            nextStep(7);
+        }
+
+        function nextNormalQuestion() {
+            currentTarget = targets[Math.floor(Math.random() * targets.length)];
+            document.getElementById('normal-question').innerHTML = `🎯 任務：請點擊選出所有能被 <mark style="background:#FFD166; padding:0 10px; border-radius:8px;">${currentTarget}</mark> 整除的數字卡片！`;
+            
+            const cardArea = document.getElementById('normal-cards');
+            cardArea.innerHTML = '';
+            
+            // 生成 5 張卡片，確保至少 2 張正確
+            for(let i=0; i<5; i++) {
+                let num = Math.floor(Math.random() * 200) + 1;
+                // 隨機微調使其有機會符合條件
+                if(Math.random() > 0.5) {
+                    while(num % currentTarget !== 0) num++;
+                }
+                
+                const card = document.createElement('button');
+                card.className = 'btn-large btn-choice';
+                card.style.fontSize = '46px';
+                card.innerText = num;
+                card.onclick = function() {
+                    if(num % currentTarget === 0) {
+                        card.style.background = '#2ECC71';
+                        card.style.boxShadow = '0 8px 0 #27AE60';
+                        card.disabled = true;
+                        normalScore += 10;
+                        document.getElementById('normal-score').innerText = normalScore;
+                    } else {
+                        card.classList.add('shake');
+                        card.style.background = '#FF6B6B';
+                        card.style.boxShadow = '0 8px 0 #C94A4A';
+                        if(normalScore >= 5) normalScore -= 5;
+                        document.getElementById('normal-score').innerText = normalScore;
+                        
+                        // 錯誤提示
+                        let hint = `個位數是 ${num % 10}，不符合 2 的雙數規則！`;
+                        if(currentTarget === 3) {
+                            let sum = String(num).split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+                            hint = `各位數之和是 ${sum}，不能被 3 整除！`;
+                        } else if(currentTarget === 5) {
+                            hint = `個位數是 ${num % 10}，不是 0 或 5！`;
+                        } else if(currentTarget === 10) {
+                            hint = `個位數是 ${num % 10}，不是 0！`;
+                        }
+                        showToast(`❌ 答錯了！${hint} (-5分)`);
+                        setTimeout(() => card.classList.remove('shake'), 400);
+                    }
+                };
+                cardArea.appendChild(card);
+            }
+        }
+
+        // ==================== 模式B：限時競技場 ====================
+        function startCompGame() {
+            compScore = 0;
+            timeLeft = 30;
+            document.getElementById('comp-score').innerText = compScore;
+            document.getElementById('timer-bar').style.width = '100%';
+            document.getElementById('timer-bar').style.backgroundColor = '#4CAF50';
+            
+            nextCompQuestion();
+            nextStep(8);
+            
+            if(compTimer) clearInterval(compTimer);
+            compTimer = setInterval(() => {
+                timeLeft -= 0.1;
+                const percentage = (timeLeft / 30) * 100;
+                const bar = document.getElementById('timer-bar');
+                bar.style.width = `${percentage}%`;
+                
+                if(timeLeft <= 10) bar.style.backgroundColor = '#FF6B6B';
+                else if(timeLeft <= 20) bar.style.backgroundColor = '#FFD166';
+                
+                if(timeLeft <= 0) {
+                    clearInterval(compTimer);
+                    endCompGame();
+                }
+            }, 100);
+        }
+
+        function nextCompQuestion() {
+            currentTarget = targets[Math.floor(Math.random() * targets.length)];
+            currentCompNum = Math.floor(Math.random() * 300) + 2;
+            if(Math.random() > 0.5) {
+                while(currentCompNum % currentTarget !== 0) currentCompNum++;
+            }
+            document.getElementById('comp-card').innerText = currentCompNum;
+            document.getElementById('comp-question').innerHTML = `❓ 請問它可以被 <mark style="background:#FFD166; padding:0 10px; border-radius:8px;">${currentTarget}</mark> 整除嗎？`;
+        }
+
+        function submitCompAnswer(isYes) {
+            const isCorrect = (currentCompNum % currentTarget === 0);
+            const card = document.getElementById('comp-card');
+            
+            if((isYes && isCorrect) || (!isYes && !isCorrect)) {
+                compScore += 20;
+                document.getElementById('comp-score').innerText = compScore;
+            } else {
+                card.classList.add('shake');
+                if(compScore >= 10) compScore -= 10;
+                document.getElementById('comp-score').innerText = compScore;
+                
+                let hint = `尾數是 ${currentCompNum % 10}`;
+                if(currentTarget === 3) {
+                    let sum = String(currentCompNum).split('').reduce((a,b)=>parseInt(a)+parseInt(b), 0);
+                    hint = `各位數和是 ${sum}`;
+                }
+                showToast(`❌ 答錯扣分！提示：${hint} (-10分)`);
+                setTimeout(() => card.classList.remove('shake'), 400);
+            }
+            nextCompQuestion();
+        }
+
+        function endCompGame() {
+            document.getElementById('final-score').innerText = compScore;
+            const badgeIcon = document.getElementById('badge-icon');
+            const badgeText = document.getElementById('badge-text');
+            
+            if(compScore >= 150) {
+                badgeIcon.innerText = '🥇';
+                badgeText.innerText = '哇！你獲得了金牌！你是整除性大師！';
+            } else if(compScore >= 80) {
+                badgeIcon.innerText = '🥈';
+                badgeText.innerText = '做得很棒！獲得了銀牌！再接再厲！';
+            } else {
+                badgeIcon.innerText = '🥉';
+                badgeText.innerText = '獲得了銅牌！多看幾次前面的魔法秘碼吧！';
+            }
+            nextStep(9);
+        }
+    </script>
+</body>
+</html>
