@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可愛四邊形大冒險 🌟 溫習遊戲</title>
+    <style>
+        :root {
+            --primary: #FF8BA7;
+            --primary-hover: #FF7092;
+            --secondary: #C3F0CA;
+            --bg: #FAEEE7;
+            --card-bg: #FFFFFF;
+            --text: #33272A;
+            --accent: #FFD8CC;
+            --correct: #59CE8F;
+            --incorrect: #FF1E56;
+            --info: #38B6FF;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+            border: 4px solid var(--accent);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: #FF5E7E;
+            font-size: 26px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 0px #fff, 2px 2px 0px var(--accent);
+        }
+
+        .progress-container {
+            background: #EEEEEE;
+            border-radius: 10px;
+            height: 14px;
+            width: 100%;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 2px solid var(--text);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), #FFD166);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .svg-container {
+            background: #FFF;
+            border: 3px dashed #B8C1EC;
+            border-radius: 16px;
+            padding: 10px;
+            display: inline-block;
+            margin-bottom: 25px;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.02);
+        }
+
+        /* Options list for Single Choice and True/False */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tf-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn-opt {
+            background: #FFF;
+            border: 3px solid var(--text);
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 var(--text);
+        }
+
+        .btn-opt:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--text);
+            background-color: var(--accent);
+        }
+
+        .btn-opt:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--text);
+        }
+
+        /* Checkbox style for multi-choice characteristics */
+        .multi-options-list {
+            text-align: left;
+            margin-bottom: 25px;
+            background: #FFF8F9;
+            padding: 20px;
+            border-radius: 16px;
+            border: 3px solid #FFD8CC;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .custom-box {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--text);
+            border-radius: 6px;
+            margin-right: 12px;
+            display: inline-block;
+            position: relative;
+            background: white;
+        }
+
+        .checkbox-item input:checked + .custom-box {
+            background-color: var(--primary);
+        }
+
+        .checkbox-item input:checked + .custom-box::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            left: 3px;
+            top: -3px;
+        }
+
+        .btn-submit {
+            background: #59CE8F;
+            color: white;
+            border: 3px solid var(--text);
+            border-radius: 16px;
+            padding: 14px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text);
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #46B47B;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--text);
+        }
+
+        .btn-submit:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--text);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: white;
+            border: 4px solid var(--text);
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .modal-title.correct { color: var(--correct); }
+        .modal-title.incorrect { color: var(--incorrect); }
+
+        .modal-body {
+            font-size: 18px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            text-align: left;
+            background: #F9F9F9;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px dashed #DDD;
+        }
+
+        .modal-btn {
+            background: var(--info);
+            color: white;
+            border: 3px solid var(--text);
+            border-radius: 14px;
+            padding: 10px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text);
+        }
+
+        .modal-btn:hover {
+            filter: brightness(0.95);
+        }
+
+        /* Review Section at the end */
+        .review-card {
+            background: #FFF;
+            border: 3px solid var(--text);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+            box-shadow: 0 4px 0 var(--accent);
+        }
+
+        .review-title {
+            font-weight: bold;
+            color: #FF5E7E;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .review-text {
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .badge-wrong {
+            background: #FFE2E2;
+            color: var(--incorrect);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .badge-correct {
+            background: #E8F9EE;
+            color: var(--correct);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📐 四邊形魔法溫習樂園 ✨</h1>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div id="game-stage">
+            <!-- Dynamic Content Appears Here -->
+        </div>
+    </div>
+
+    <!-- Modal for feedback -->
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">結果</div>
+            <div class="modal-body" id="modalBody">內容</div>
+            <button class="modal-btn" id="modalBtn" onclick="closeModal()">下一題 👍</button>
+        </div>
+    </div>
+
+    <script>
+        // Characteristics Bank
+        const traits = {
+            t1: "四邊長度相等",
+            t2: "兩組對邊長度相等",
+            t3: "兩組鄰邊長度相等",
+            t4: "兩組對邊平行",
+            t5: "只有一組對邊平行",
+            t6: "四個角都是直角",
+            t7: "兩組對角相等",
+            t8: "只有一組對角相等"
+        };
+
+        // Questions Definition
+        const questions = [
+            // Stage 1: Identification (1 to 5)
+            {
+                type: "single",
+                title: "第 1 題：請看點陣圖，選出這個四邊形的正確名稱。",
+                shape: "square",
+                options: ["正方形", "長方形", "平行四邊形", "梯形"],
+                answer: "正方形",
+                explain: "這個圖形有 4 條相等的邊，且 4 個角都是直角，所以是完美的<b>正方形</b>哦！"
+            },
+            {
+                type: "single",
+                title: "第 2 題：請看點陣圖，選出這個四邊形的正確名稱。",
+                shape: "trapezoid",
+                options: ["正方形", "長方形", "菱形", "梯形"],
+                answer: "梯形",
+                explain: "這個圖形只有上下一組對邊平行，左右不平行，因此是標準的<b>梯形</b>！"
+            },
+            {
+                type: "single",
+                title: "第 3 題：請看點陣圖，選出這個四邊形的正確名稱。",
+                shape: "parallelogram",
+                options: ["長方形", "平行四邊形", "菱形", "正方形"],
+                answer: "平行四邊形",
+                explain: "它的兩組對邊互相平行且相等，但角不是直角，所以是<b>平行四邊形</b>！"
+            },
+            {
+                type: "single",
+                title: "第 4 題：請看點陣圖，選出這個四邊形的正確名稱。",
+                shape: "rectangle",
+                options: ["正方形", "長方形", "平行四邊形", "菱形"],
+                answer: "長方形",
+                explain: "它的兩組對邊分別相等，4 個角都是直角，但鄰邊不相等，是長長的<b>長方形</b>！"
+            },
+            {
+                type: "single",
+                title: "第 5 題：請看點陣圖，選出這個四邊形的正確名稱。",
+                shape: "rhombus",
+                options: ["平行四邊形", "梯形", "菱形", "長方形"],
+                answer: "菱形",
+                explain: "它的 4 條邊都一樣長，對角相等但不是直角，就像一條漂亮的鑽石，是<b>菱形</b>！"
+            },
+            // Stage 2: Characteristics (6 to 9)
+            {
+                type: "multi",
+                title: "第 6 題：請勾選出【正方形】所擁有的【所有特性】。",
+                shape: "square",
+                // Correct: t1, t2, t3, t4, t6, t7
+                answer: ["t1", "t2", "t3", "t4", "t6", "t7"],
+                explain: "<b>正方形是全能王者！</b> 它符合：四邊長度相等、兩組對邊長度相等、兩組鄰邊長度相等、兩組對邊平行、四個角都是直角、兩組對角相等。"
+            },
+            {
+                type: "multi",
+                title: "第 7 題：請勾選出【平行四邊形】所擁有的【所有特性】。",
+                shape: "parallelogram",
+                // Correct: t2, t4, t7
+                answer: ["t2", "t4", "t7"],
+                explain: "<b>平行四邊形的基本功：</b> 它的兩組對邊長度相等、兩組對邊平行、兩組對角相等。它不保證四邊相等或直角哦！"
+            },
+            {
+                type: "multi",
+                title: "第 8 題：請勾選出【梯形】所擁有的【所有特性】。",
+                shape: "trapezoid",
+                // Correct: t5
+                answer: ["t5"],
+                explain: "<b>梯形的獨特標誌：</b> 它【只有一組對邊平行】。其它特徵如邊長相等、對角相等通通都不一定具備。"
+            },
+            {
+                type: "multi",
+                title: "第 9 題：請勾選出【菱形】所擁建立的【所有特性】。",
+                shape: "rhombus",
+                // Correct: t1, t2, t3, t4, t7
+                answer: ["t1", "t2", "t3", "t4", "t7"],
+                explain: "<b>菱形的特點：</b> 它的四邊長度相等、兩組對邊長度相等、兩組鄰邊長度相等、兩組對邊平行、兩組對角相等。但它的角不一定是直角！"
+            },
+            // Stage 3: Inclusion Relations (10 to 15)
+            {
+                type: "tf",
+                title: "第 10 題：正方形是屬於長方形、菱形和平行四邊形的一種。",
+                answer: "O",
+                explain: "<b>正確！⭕</b> 因為正方形同時具備了長方形（有直角）、菱形（四邊相等）和平行四邊形（對邊平行）的所有特徵，所以它是它們的特殊成員！"
+            },
+            {
+                type: "tf",
+                title: "第 11 題：長方形是屬於平行四邊形的一種。",
+                answer: "O",
+                explain: "<b>正確！⭕</b> 平行四邊形只要「兩組對邊平行且相等」即可。長方形完全符合這個條件，只是它的角剛好都是 90 度，所以長方形是特殊的平行四邊形。"
+            },
+            {
+                type: "tf",
+                title: "第 12 題：菱形是屬於平行四邊形的一種。",
+                answer: "O",
+                explain: "<b>正確！⭕</b> 菱形的兩組對邊平行且相等，完全滿足平行四邊形的定義，所以菱形也是平行四邊形的一種家族成員。"
+            },
+            {
+                type: "tf",
+                title: "第 13 題：所有平行四邊形都屬於長方形、正方形和菱形。",
+                answer: "X",
+                explain: "<b>錯誤！❌</b> 關係不能顛倒！一般的平行四邊形沒有直角（不屬於長方形/正方形），四邊也沒有都相等（不屬於菱形/正方形）。"
+            },
+            {
+                type: "tf",
+                title: "第 14 題：長方形不屬於正方形。",
+                answer: "O",
+                explain: "<b>正確！⭕</b> 正方形要求「四條邊都要一樣長」，普通的長方形只有對邊相等、鄰邊不相等，所以長方形不能算作正方形。"
+            },
+            {
+                type: "tf",
+                title: "第 15 題：菱形不屬於正方形。",
+                answer: "O",
+                explain: "<b>正確！⭕</b> 正方形要求「四個角都是直角」，而普通的菱形只有對角相等、沒有直角，所以菱形不屬於正方形。"
+            }
+        ];
+
+        // SVGs rendering tool
+        function getShapeSVG(shape) {
+            let shapesSVG = {
+                square: `<rect x="80" y="80" width="120" height="120" fill="none" stroke="#33272A" stroke-width="4"/>`,
+                trapezoid: `<polygon points="80,80 160,80 200,160 40,160" fill="none" stroke="#33272A" stroke-width="4"/>`,
+                parallelogram: `<polygon points="80,80 200,80 160,160 40,160" fill="none" stroke="#33272A" stroke-width="4"/>`,
+                rectangle: `<rect x="100" y="40" width="80" height="160" fill="none" stroke="#33272A" stroke-width="4"/>`,
+                rhombus: `<polygon points="120,40 200,120 120,200 40,120" fill="none" stroke="#33272A" stroke-width="4"/>`
+            };
+            
+            let dots = "";
+            for(let x=40; x<=200; x+=40) {
+                for(let y=40; y<=200; y+=40) {
+                    dots += `<circle cx="${x}" cy="${y}" r="3" fill="#A0A5C1" />`;
+                }
+            }
+
+            return `<svg width="240" height="240" viewBox="0 0 240 240">
+                <rect width="240" height="240" fill="#FAFAFA" rx="12" stroke="#E2E4F0" stroke-width="2"/>
+                ${shapesSVG[shape] || ''}
+                ${dots}
+            </svg>`;
+        }
+
+        let currentIdx = 0;
+        let wrongAttempts = []; // store objects of first-time wrong answers for final summary
+        let hasFailedCurrentQuestion = false;
+
+        function initGame() {
+            currentIdx = 0;
+            wrongAttempts = [];
+            showQuestion();
+        }
+
+        function updateProgress() {
+            let percent = (currentIdx / questions.length) * 100;
+            document.getElementById("progressBar").style.width = percent + "%";
+        }
+
+        function showQuestion() {
+            updateProgress();
+            hasFailedCurrentQuestion = false; // Reset failure flag for the new question
+            
+            if (currentIdx >= questions.length) {
+                showFinalSummary();
+                return;
+            }
+
+            const q = questions[currentIdx];
+            const container = document.getElementById("game-stage");
+            container.innerHTML = "";
+
+            // Create title
+            let titleEl = document.createElement("div");
+            titleEl.className = "question-title";
+            titleEl.innerHTML = q.title;
+            container.appendChild(titleEl);
+
+            // Add SVG if it has a shape
+            if (q.shape && q.type !== "tf") {
+                let svgWrap = document.createElement("div");
+                svgWrap.className = "svg-container";
+                svgWrap.innerHTML = getShapeSVG(q.shape);
+                container.appendChild(svgWrap);
+            }
+
+            // Render options based on type
+            if (q.type === "single") {
+                let optionsGrid = document.createElement("div");
+                optionsGrid.className = "options-grid";
+                q.options.forEach(opt => {
+                    let btn = document.createElement("button");
+                    btn.className = "btn-opt";
+                    btn.innerText = opt;
+                    btn.onclick = () => checkSingleAnswer(opt);
+                    optionsGrid.appendChild(btn);
+                });
+                container.appendChild(optionsGrid);
+            } 
+            else if (q.type === "multi") {
+                let multiList = document.createElement("div");
+                multiList.className = "multi-options-list";
+                
+                Object.keys(traits).forEach(key => {
+                    let label = document.createElement("label");
+                    label.className = "checkbox-item";
+                    label.innerHTML = `
+                        <input type="checkbox" value="${key}" class="trait-check">
+                        <span class="custom-box"></span>
+                        <span>${traits[key]}</span>
+                    `;
+                    multiList.appendChild(label);
+                });
+                container.appendChild(multiList);
+
+                let submitBtn = document.createElement("button");
+                submitBtn.className = "btn-submit";
+                submitBtn.innerText = "驗證特徵 🔍";
+                submitBtn.onclick = checkMultiAnswer;
+                container.appendChild(submitBtn);
+            }
+            else if (q.type === "tf") {
+                let tfGrid = document.createElement("div");
+                tfGrid.className = "tf-grid";
+                
+                let btnO = document.createElement("button");
+                btnO.className = "btn-opt";
+                btnO.style.borderColor = "var(--correct)";
+                btnO.style.color = "var(--correct)";
+                btnO.innerHTML = "⭕ 正確";
+                btnO.onclick = () => checkTFAnswer("O");
+
+                let btnX = document.createElement("button");
+                btnX.className = "btn-opt";
+                btnX.style.borderColor = "var(--incorrect)";
+                btnX.style.color = "var(--incorrect)";
+                btnX.innerHTML = "❌ 錯誤";
+                btnX.onclick = () => checkTFAnswer("X");
+
+                tfGrid.appendChild(btnO);
+                tfGrid.appendChild(btnX);
+                container.appendChild(tfGrid);
+            }
+        }
+
+        // Handle Single Choice Check
+        function checkSingleAnswer(selected) {
+            const q = questions[currentIdx];
+            let isCorrect = (selected === q.answer);
+
+            let bodyHtml = `<b>你的選擇：</b> ${selected}<br/>`;
+            bodyHtml += `<b>正確答案：</b> ${q.answer}<br/><br/>`;
+            bodyHtml += `💡 <b>溫習小提示：</b><br/>${q.explain}`;
+
+            if (isCorrect) {
+                openModal("答對了！太棒了 🎉", bodyHtml, "correct", false);
+            } else {
+                recordWrongAnswer(q.title, selected, q.answer, q.explain);
+                openModal("哎呀，答錯囉！ 💡", bodyHtml, "incorrect", false);
+            }
+        }
+
+        // Handle True/False Choice Check
+        function checkTFAnswer(selected) {
+            const q = questions[currentIdx];
+            let isCorrect = (selected === q.answer);
+
+            let displaySelected = selected === "O" ? "⭕ 正確" : "❌ 錯誤";
+            let displayAnswer = q.answer === "O" ? "⭕ 正確" : "❌ 錯誤";
+
+            let bodyHtml = `<b>你的選擇：</b> ${displaySelected}<br/>`;
+            bodyHtml += `<b>正確答案：</b> ${displayAnswer}<br/><br/>`;
+            bodyHtml += `💡 <b>溫習小提示：</b><br/>${q.explain}`;
+
+            if (isCorrect) {
+                openModal("答對了！觀念很清晰 🌟", bodyHtml, "correct", false);
+            } else {
+                recordWrongAnswer(q.title, displaySelected, displayAnswer, q.explain);
+                openModal("觀念有點混淆囉！ 💡", bodyHtml, "incorrect", false);
+            }
+        }
+
+        // Handle Multi Characteristics Check
+        function checkMultiAnswer() {
+            const q = questions[currentIdx];
+            let checkboxes = document.querySelectorAll(".trait-check");
+            let selectedKeys = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedKeys.push(cb.value);
+            });
+
+            // Compare arrays
+            let correctKeys = q.answer;
+            let isPerfect = true;
+
+            // Check if selected matches correct perfectly
+            if (selectedKeys.length !== correctKeys.length) {
+                isPerfect = false;
+            } else {
+                selectedKeys.forEach(k => {
+                    if (!correctKeys.includes(k)) isPerfect = false;
+                });
+            }
+
+            // Build user choices names
+            let userChoicesText = selectedKeys.map(k => traits[k]).join("、") || "沒有勾選任何一項";
+            let correctAnswersText = correctKeys.map(k => traits[k]).join("、");
+
+            let bodyHtml = `<b>你的選擇：</b><br/>${selectedKeys.map(k => `<span class="badge-wrong">✓ ${traits[k]}</span>`).join("<br/>") || '無'}<br/><br/>`;
+            bodyHtml += `<b>正確的完整特徵應該是：</b><br/>${correctKeys.map(k => `<span class="badge-correct">✓ ${traits[k]}</span>`).join("<br/>")}<br/><br/>`;
+            bodyHtml += `💡 <b>性質解析：</b><br/>${q.explain}`;
+
+            if (isPerfect) {
+                openModal("完全正確！全部特徵都找齊了 🏆", bodyHtml, "correct", false);
+            } else {
+                // If it's the first time they make a mistake on this multi-choice question, record it
+                recordWrongAnswer(
+                    q.title, 
+                    userChoicesText, 
+                    correctAnswersText, 
+                    q.explain
+                );
+                // Set the modal to "retry" mode so they can try again on the spot
+                openModal("特徵沒選對或不夠完整哦！ ⚠️", bodyHtml, "incorrect", true);
+            }
+        }
+
+        // Record mistakes securely once per question item
+        function recordWrongAnswer(title, userAns, correctAns, explanation) {
+            if (!hasFailedCurrentQuestion) {
+                wrongAttempts.push({
+                    title: title,
+                    userAns: userAns,
+                    correctAns: correctAns,
+                    explanation: explanation
+                });
+                hasFailedCurrentQuestion = true;
+            }
+        }
+
+        // Modal triggers
+        function openModal(title, body, statusClass, isRetryMode) {
+            const modalOverlay = document.getElementById("feedbackModal");
+            const modalTitle = document.getElementById("modalTitle");
+            const modalBody = document.getElementById("modalBody");
+            const modalBtn = document.getElementById("modalBtn");
+
+            modalTitle.innerText = title;
+            modalTitle.className = "modal-title " + statusClass;
+            modalBody.innerHTML = body;
+
+            if (isRetryMode) {
+                modalBtn.innerText = "重新嘗試 🔄";
+                modalBtn.onclick = () => {
+                    modalOverlay.classList.remove("active");
+                };
+            } else {
+                modalBtn.innerText = "進入下一題 👍";
+                modalBtn.onclick = () => {
+                    modalOverlay.classList.remove("active");
+                    currentIdx++;
+                    showQuestion();
+                };
+            }
+
+            modalOverlay.classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("feedbackModal").classList.remove("active");
+        }
+
+        // Final Review Dashboard
+        function showFinalSummary() {
+            document.getElementById("progressBar").style.width = "100%";
+            const container = document.getElementById("game-stage");
+            container.innerHTML = "";
+
+            let titleEl = document.createElement("div");
+            titleEl.className = "question-title";
+            titleEl.style.color = "var(--correct)";
+            titleEl.style.fontSize = "26px";
+            titleEl.innerHTML = "🎉 恭喜完成全部溫習挑戰！";
+            container.appendChild(titleEl);
+
+            let intro = document.createElement("p");
+            intro.style.fontSize = "18px";
+            intro.style.marginBottom = "25px";
+            intro.innerHTML = "讓我們一起來回顧這次溫習中需要加強的幾何知識點吧：";
+            container.appendChild(intro);
+
+            if (wrongAttempts.length === 0) {
+                let masterCard = document.createElement("div");
+                masterCard.className = "review-card";
+                masterCard.style.textAlign = "center";
+                masterCard.style.borderColor = "var(--correct)";
+                masterCard.style.backgroundColor = "#F2FCF5";
+                masterCard.innerHTML = `
+                    <div class="review-title" style="color:var(--correct); font-size:22px;">💯 完美大師！</div>
+                    <p style="font-size:18px; margin-top:10px; font-weight:bold;">你太厲害了！整場練習中沒有答錯任何題目，四邊形的性質與家族歸屬關係已經全部精通囉！✨</p>
+                `;
+                container.appendChild(masterCard);
+            } else {
+                let reportTitle = document.createElement("div");
+                reportTitle.style.fontWeight = "bold";
+                reportTitle.style.fontSize = "18px";
+                reportTitle.style.textAlign = "left";
+                reportTitle.style.marginBottom = "10px";
+                reportTitle.innerHTML = `📝 <b>你曾做錯的題目與答案複習 (${wrongAttempts.length} 題)：</b>`;
+                container.appendChild(reportTitle);
+
+                wrongAttempts.forEach((item, index) => {
+                    let card = document.createElement("div");
+                    card.className = "review-card";
+                    card.innerHTML = `
+                        <div class="review-title">錯題 ${index + 1}：${item.title}</div>
+                        <div class="review-text">❌ <b>你的錯誤回答：</b><br/><span style="color:var(--incorrect)">${item.userAns}</span></div>
+                        <div class="review-text">⭕ <b>正確完整解答：</b><br/><span style="color:var(--correct)">${item.correctAns}</span></div>
+                        <div class="review-text" style="margin-top:8px; padding-top:8px; border-top:1px dashed #DDD; font-size:15px; color:#555;">
+                            💡 <b>溫習要點：</b><br/>${item.explanation}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            // Restart button
+            let restartBtn = document.createElement("button");
+            restartBtn.className = "btn-submit";
+            restartBtn.style.background = "var(--primary)";
+            restartBtn.style.marginTop = "15px";
+            restartBtn.innerText = "再玩一次，挑戰滿分！ 🔄";
+            restartBtn.onclick = initGame;
+            container.appendChild(restartBtn);
+        }
+
+        // Start game on load
+        window.onload = initGame;
+    </script>
+</body>
+</html>
