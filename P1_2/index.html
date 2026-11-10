@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小學一年級數學互動動畫 - 數的合成與分解 (2-18)</title>
+    <style>
+        :root {
+            --primary-color: #ff7675;
+            --secondary-color: #74b9ff;
+            --total-color: #a29bfe;
+            --bg-color: #f7f9fa;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Noto Sans TC', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* 頂部數字選擇區域 */
+        .number-selector-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .selector-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .num-btn {
+            background-color: #f1f2f6;
+            border: 2px solid #dfe4ea;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #57606f;
+        }
+
+        .num-btn:hover {
+            background-color: #e4e7eb;
+        }
+
+        .num-btn.active {
+            background-color: var(--total-color);
+            color: white;
+            border-color: #8c7ae6;
+            transform: scale(1.05);
+        }
+
+        /* 模式切換按鈕 */
+        .mode-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            font-size: 22px;
+            font-weight: bold;
+            border: 3px solid transparent;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+        }
+
+        .mode-btn.compose {
+            background-color: #ffeaa7;
+            color: #d35400;
+            border-color: #f39c12;
+        }
+
+        .mode-btn.decompose {
+            background-color: #dff9fb;
+            color: #2c3e50;
+            border-color: #22a6b3;
+        }
+
+        .mode-btn.active {
+            transform: scale(1.08);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            outline: 4px solid #2d3436;
+        }
+
+        /* 組合明細排版按鈕 */
+        .combos-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 900px;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+
+        .combo-btn {
+            background-color: white;
+            border: 2px solid #ced6e0;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .combo-btn.active {
+            background-color: #2ed573;
+            color: white;
+            border-color: #26af5f;
+        }
+
+        /* 教學舞台主面板 */
+        .stage-card {
+            background: white;
+            width: 100%;
+            max-width: 900px;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 引導文字 */
+        .instruction-banner {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            text-align: center;
+            min-height: 35px;
+            background: #f8f9fa;
+            padding: 6px 20px;
+            border-radius: 30px;
+            border: 1px dashed #ccc;
+        }
+
+        /* 動畫畫布容器 */
+        .canvas-area {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            margin-bottom: 20px;
+        }
+
+        /* 三個圓圈的佈局架構 */
+        .circle-container {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+        }
+
+        /* 上方大圓圈 */
+        #circle-top {
+            top: 10px;
+            left: calc(50% - 90px);
+        }
+
+        /* 左下細圓圈 */
+        #circle-left {
+            bottom: 45px;
+            left: calc(50% - 240px);
+        }
+
+        /* 右下細圓圈 */
+        #circle-right {
+            bottom: 45px;
+            right: calc(50% - 240px);
+        }
+
+        .main-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #fafafa;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+            padding: 10px;
+            gap: 4px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        #circle-top .main-circle {
+            border: 6px solid var(--total-color);
+            background-color: #f3f0ff;
+        }
+
+        #circle-left .main-circle {
+            border: 5px solid var(--primary-color);
+            background-color: #fff5f5;
+        }
+
+        #circle-right .main-circle {
+            border: 5px solid var(--secondary-color);
+            background-color: #f0f7ff;
+        }
+
+        /* 數字標籤置於圓圈正下方 */
+        .circle-label {
+            margin-top: 12px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            visibility: hidden;
+            transition: opacity 0.2s;
+        }
+
+        #circle-top .circle-label { background-color: var(--total-color); }
+        #circle-left .circle-label { background-color: var(--primary-color); }
+        #circle-right .circle-label { background-color: var(--secondary-color); }
+
+        .circle-label.visible {
+            visibility: visible;
+        }
+
+        /* 蘋果樣式 */
+        .apple {
+            width: 25px;
+            height: 25px;
+            position: relative;
+            z-index: 10;
+            display: inline-block;
+        }
+
+        /* 獨立動畫用的絕對定位蘋果 */
+        .anim-apple {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* 數式呈現區域 */
+        .equation-area {
+            font-size: 56px;
+            font-weight: bold;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 100%;
+            border-top: 2px dashed #f1f2f6;
+            padding-top: 15px;
+        }
+
+        .eq-part { transition: all 0.3s ease; opacity: 0; }
+        .eq-part.visible { opacity: 1; }
+        .eq-red { color: var(--primary-color); }
+        .eq-blue { color: var(--secondary-color); }
+        .eq-purple { color: var(--total-color); }
+
+        /* 控制按鈕區 */
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .action-btn {
+            padding: 12px 30px;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            background-color: #2ed573;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover { background-color: #26af5f; }
+        .action-btn:disabled {
+            background-color: #ced6e0;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .action-btn.reset {
+            background-color: #747d8c;
+        }
+        .action-btn.reset:hover { background-color: #57606f; }
+
+        /* SVG 向量線條與尖嘴箭頭 */
+        svg.arrows-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .arrow-path {
+            fill: none;
+            stroke-width: 4;
+            stroke-dasharray: 8, 6;
+            display: none;
+        }
+
+        #path-left { stroke: var(--primary-color); }
+        #path-right { stroke: var(--secondary-color); }
+
+        @media (max-width: 768px) {
+            #circle-left { left: 10px; }
+            #circle-right { right: 10px; }
+            .main-circle { width: 110px; height: 110px; padding: 5px; }
+            .apple { width: 18px; height: 18px; }
+            .canvas-area { height: 34px; }
+            .equation-area { font-size: 42px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🍎 數的合成與分解 🍏</h1>
+
+    <!-- 頂部大數字切換器 (2 - 18) -->
+    <div class="number-selector-container">
+        <div class="selector-row" id="number-buttons-grid">
+            <!-- 由 JS 自動生成 2 至 18 的按鈕 -->
+        </div>
+    </div>
+
+    <!-- 模式選擇 -->
+    <div class="mode-container">
+        <button class="mode-btn compose active" onclick="switchMode('compose')">▶ 合成模式</button>
+        <button class="mode-btn decompose" onclick="switchMode('decompose')">▶ 分成模式</button>
+    </div>
+
+    <!-- 組合分流選擇按鈕 -->
+    <div class="combos-container" id="combos-grid">
+        <!-- 動態產生分解組合 -->
+    </div>
+
+    <!-- 主舞台面板 -->
+    <div class="stage-card">
+        <!-- 頂部提示引導文字 -->
+        <div class="instruction-banner" id="instruction-text">
+            將兩個部分合併成一個整體。
+        </div>
+
+        <!-- 動畫圖形區 -->
+        <div class="canvas-area">
+            <!-- SVG 尖嘴箭頭畫布 -->
+            <svg class="arrows-layer">
+                <defs>
+                    <marker id="arrow-red" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+                        <path d="M1,1 L7,4 L1,7 Z" fill="#ff7675" />
+                    </marker>
+                    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+                        <path d="M1,1 L7,4 L1,7 Z" fill="#74b9ff" />
+                    </marker>
+                </defs>
+                <!-- 拋物線路徑 -->
+                <path id="path-left" class="arrow-path" d="" marker-end="url(#arrow-red)" />
+                <path id="path-right" class="arrow-path" d="" marker-end="url(#arrow-blue)" />
+            </svg>
+
+            <!-- 三個定位核心圈圈 -->
+            <div class="circle-container" id="circle-top">
+                <div class="main-circle"></div>
+                <div class="circle-label" id="label-top">0</div>
+            </div>
+
+            <div class="circle-container" id="circle-left">
+                <div class="main-circle"></div>
+                <div class="circle-label" id="label-left">0</div>
+            </div>
+
+            <div class="circle-container" id="circle-right">
+                <div class="main-circle"></div>
+                <div class="circle-label" id="label-right">0</div>
+            </div>
+
+            <!-- 用於動畫外飛的獨立蘋果容器群 -->
+            <div id="animation-apples-pool"></div>
+        </div>
+
+        <!-- 巨型數學數式 -->
+        <div class="equation-area" id="equation-display">
+            <!-- 動態注入格式 -->
+        </div>
+
+        <!-- 逐步引導控制按鈕 -->
+        <div class="control-panel">
+            <button class="action-btn" id="next-step-btn" onclick="advanceStep()">開始合併 ➔</button>
+            <button class="action-btn reset" onclick="resetStage()">重置 ↺</button>
+        </div>
+    </div>
+
+    <script>
+        // 紅蘋果與藍蘋果的 SVG 圖像編碼
+        const redAppleSvg = `<svg class="apple" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50,25 C40,10 15,15 15,45 C15,75 40,90 50,90 C60,90 85,75 85,45 C85,15 60,10 50,25 Z" fill="#ff4d4d"/><path d="M50,25 C48,15 53,5 60,2" fill="none" stroke="#4cd137" stroke-width="6" stroke-linecap="round"/><path d="M60,2 C65,5 75,5 70,12 C65,18 58,12 60,2 Z" fill="#4cd137"/></svg>`;
+        const blueAppleSvg = `<svg class="apple" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50,25 C40,10 15,15 15,45 C15,75 40,90 50,90 C60,90 85,75 85,45 C85,15 60,10 50,25 Z" fill="#2980b9"/><path d="M50,25 C48,15 53,5 60,2" fill="none" stroke="#4cd137" stroke-width="6" stroke-linecap="round"/><path d="M60,2 C65,5 75,5 70,12 C65,18 58,12 60,2 Z" fill="#4cd137"/></svg>`;
+
+        // 全局系統狀態
+        let currentTotal = 2;       // 當前主數字大按鈕
+        let currentMode = 'compose'; // 'compose' 或 'decompose'
+        let leftPart = 1;           // 左側分量
+        let rightPart = 1;          // 右側分量
+        let currentStep = 0;        // 狀態機步驟階段：0=初始, 1=動畫已播完, 2=算式與數字標籤已揭曉
+
+        // 初始化佈局結構
+        window.onload = function() {
+            renderNumberSelector();
+            selectNumber(2);
+            updateArrowPaths();
+            window.addEventListener('resize', updateArrowPaths);
+        };
+
+        // 動態描繪 2-18 頂部按鈕
+        function renderNumberSelector() {
+            const grid = document.getElementById('number-buttons-grid');
+            grid.innerHTML = '';
+            for (let i = 2; i <= 18; i++) {
+                const btn = document.createElement('button');
+                btn.className = `num-btn ${i === 2 ? 'active' : ''}`;
+                btn.id = `num-btn-${i}`;
+                btn.innerText = `${i} 的分合`;
+                btn.onclick = () => selectNumber(i);
+                grid.appendChild(btn);
+            }
+        }
+
+        // 切換主核心目標數字
+        function selectNumber(num) {
+            currentTotal = num;
+            document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`num-btn-${num}`).classList.add('active');
+            
+            // 自動適配重構分流按鈕清單
+            generateComboButtons();
+        }
+
+        // 切換合成與分成模式
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            if(mode === 'compose') {
+                document.querySelector('.mode-btn.compose').classList.add('active');
+            } else {
+                document.querySelector('.mode-btn.decompose').classList.add('active');
+            }
+            generateComboButtons();
+        }
+
+        // 動態生成選定數字下的所有拆分可能
+        function generateComboButtons() {
+            const container = document.getElementById('combos-grid');
+            container.innerHTML = '';
+            
+            // 窮舉所有組合組合 (不包含0，以符合一年級實物操作常理)
+            for (let i = 1; i < currentTotal; i++) {
+                const j = currentTotal - i;
+                const btn = document.createElement('button');
+                btn.className = 'combo-btn';
+                if(currentMode === 'compose') {
+                    btn.innerText = `${i} 和 ${j}`;
+                } else {
+                    btn.innerText = `${currentTotal} 分成 ${i} 和 ${j}`;
+                }
+                
+                btn.onclick = () => {
+                    document.querySelectorAll('.combo-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    setCombination(i, j);
+                };
+                container.appendChild(btn);
+            }
+            
+            // 預設選中第一個組合
+            if(container.firstChild) {
+                container.firstChild.click();
+            }
+        }
+
+        // 選定具體組合配對，重置並重繪基礎圖形舞台
+        function setCombination(left, right) {
+            leftPart = left;
+            rightPart = right;
+            resetStage();
+        }
+
+        // 計算與校正尖嘴箭頭的弧線路徑
+        function updateArrowPaths() {
+            const topCircle = document.querySelector('#circle-top .main-circle');
+            const leftCircle = document.querySelector('#circle-left .main-circle');
+            const rightCircle = document.querySelector('#circle-right .main-circle');
+            const canvas = document.querySelector('.canvas-area');
+
+            if (!topCircle || !leftCircle || !rightCircle) return;
+
+            const rectCanvas = canvas.getBoundingClientRect();
+            const rectTop = topCircle.getBoundingClientRect();
+            const rectLeft = leftCircle.getBoundingClientRect();
+            const rectRight = rightCircle.getBoundingClientRect();
+
+            // 圓心相對坐標
+            const topX = rectTop.left - rectCanvas.left + rectTop.width / 2;
+            const topY = rectTop.top - rectCanvas.top + rectTop.height / 2;
+            const leftX = rectLeft.left - rectCanvas.left + rectLeft.width / 2;
+            const leftY = rectLeft.top - rectCanvas.top + rectLeft.height / 2;
+            const rightX = rectRight.left - rectCanvas.left + rectRight.width / 2;
+            const rightY = rectRight.top - rectCanvas.top + rectRight.height / 2;
+
+            const pathLeftEl = document.getElementById('path-left');
+            const pathRightEl = document.getElementById('path-right');
+
+            if (currentMode === 'compose') {
+                // 合成：由下網上指向大圈圈
+                pathLeftEl.setAttribute('d', `M ${leftX},${leftY - 40} Q ${(leftX+topX)/2 - 30},${(leftY+topY)/2 - 20} ${topX - 30},${topY + 50}`);
+                pathRightEl.setAttribute('d', `M ${rightX},${rightY - 40} Q ${(rightX+topX)/2 + 30},${(rightY+topY)/2 - 20} ${topX + 30},${topY + 50}`);
+            } else {
+                // 分成：由上方大圈圈發散往指向下方小圈
+                pathLeftEl.setAttribute('d', `M ${topX - 20},${topY + 40} Q ${(leftX+topX)/2 - 40},${(leftY+topY)/2 - 10} ${leftX},${leftY - 55}`);
+                pathRightEl.setAttribute('d', `M ${topX + 20},${topY + 40} Q ${(rightX+topX)/2 + 40},${(rightY+topY)/2 - 10} ${rightX},${rightY - 55}`);
+            }
+        }
+
+        // 完全回復初始化靜態配置
+        function resetStage() {
+            currentStep = 0;
+            
+            // 清理與初始化按鈕文字
+            const nextBtn = document.getElementById('next-step-btn');
+            nextBtn.disabled = false;
+            nextBtn.innerText = currentMode === 'compose' ? '開始合併 ➔' : '開始拆分 ➔';
+
+            // 隱藏線條箭頭與標籤
+            document.getElementById('path-left').style.display = 'none';
+            document.getElementById('path-right').style.display = 'none';
+            document.getElementById('label-top').classList.remove('visible');
+            document.getElementById('label-left').classList.remove('visible');
+            document.getElementById('label-right').classList.remove('visible');
+
+            // 清空所有容器內容物
+            document.querySelector('#circle-top .main-circle').innerHTML = '';
+            document.querySelector('#circle-left .main-circle').innerHTML = '';
+            document.querySelector('#circle-right .main-circle').innerHTML = '';
+            document.getElementById('animation-apples-pool').innerHTML = '';
+            document.getElementById('equation-display').innerHTML = '';
+
+            // 根據模式擺放靜態蘋果與設定對應背景引導語
+            if (currentMode === 'compose') {
+                document.getElementById('instruction-text').innerText = '將兩個部分合併成一個整體。';
+                
+                // 下方放置對應靜態蘋果
+                fillApples('#circle-left .main-circle', leftPart, 'red');
+                fillApples('#circle-right .main-circle', rightPart, 'blue');
+
+                // 初始顯示下方的分量數字標籤
+                document.getElementById('label-left').innerText = leftPart;
+                document.getElementById('label-right').innerText = rightPart;
+                document.getElementById('label-left').classList.add('visible');
+                document.getElementById('label-right').classList.add('visible');
+            } else {
+                document.getElementById('instruction-text').innerText = '將一個整體拆成兩個部分。';
+                
+                // 上方大圈圈放置全額蘋果
+                fillApples('#circle-top .main-circle', leftPart, 'red');
+                fillApples('#circle-top .main-circle', rightPart, 'blue');
+
+                // 初始顯示上方的總量數字標籤
+                document.getElementById('label-top').innerText = currentTotal;
+                document.getElementById('label-top').classList.add('visible');
+            }
+
+            updateArrowPaths();
+        }
+
+        // 輔助批量塞入蘋果
+        function fillApples(selector, count, color) {
+            const container = document.querySelector(selector);
+            const template = color === 'red' ? redAppleSvg : blueAppleSvg;
+            for (let c = 0; c < count; c++) {
+                container.innerHTML += template;
+            }
+        }
+
+        // 核心步進推進器狀態機
+        function advanceStep() {
+            if (currentStep === 0) {
+                // 執行路徑動畫
+                executeThrowAnimation();
+            } else if (currentStep === 1) {
+                // 展現最終算式結果與補齊對應標籤
+                revealEquationsAndLabels();
+            }
+        }
+
+        // 核心：執行擬真拋物線動態效果
+        function executeThrowAnimation() {
+            document.getElementById('next-step-btn').disabled = true;
+
+            // 顯現引導尖嘴箭頭
+            document.getElementById('path-left').style.display = 'block';
+            document.getElementById('path-right').style.display = 'block';
+
+            const pool = document.getElementById('animation-apples-pool');
+            pool.innerHTML = '';
+
+            const topCircle = document.querySelector('#circle-top .main-circle');
+            const leftCircle = document.querySelector('#circle-left .main-circle');
+            const rightCircle = document.querySelector('#circle-right .main-circle');
+            const canvas = document.querySelector('.canvas-area');
+            const rectCanvas = canvas.getBoundingClientRect();
+
+            // 定位出起點與終點位置
+            const getCenterCoords = (el) => {
+                const r = el.getBoundingClientRect();
+                return {
+                    x: r.left - rectCanvas.left + r.width / 2 - 12,
+                    y: r.top - rectCanvas.top + r.height / 2 - 12
+                };
+            };
+
+            const topCenter = getCenterCoords(topCircle);
+            const leftCenter = getCenterCoords(leftCircle);
+            const rightCenter = getCenterCoords(rightCircle);
+
+            // 根據模式決定動畫流向參數
+            let configs = [];
+
+            if (currentMode === 'compose') {
+                // 左小圈 -> 上大圈
+                for (let i = 0; i < leftPart; i++) {
+                    configs.push({ color: 'red', start: leftCenter, end: topCenter, controlOffset: { x: -40, y: -60 } });
+                }
+                // 右小圈 -> 上大圈
+                for (let i = 0; i < rightPart; i++) {
+                    configs.push({ color: 'blue', start: rightCenter, end: topCenter, controlOffset: { x: 40, y: -60 } });
+                }
+                // 清空原位置的實體靜態蘋果
+                leftCircle.innerHTML = '';
+                rightCircle.innerHTML = '';
+            } else {
+                // 上大圈 -> 左小圈
+                for (let i = 0; i < leftPart; i++) {
+                    configs.push({ color: 'red', start: topCenter, end: leftCenter, controlOffset: { x: -50, y: -40 } });
+                }
+                // 上大圈 -> 右小圈
+                for (let i = 0; i < rightPart; i++) {
+                    configs.push({ color: 'blue', start: topCenter, end: rightCenter, controlOffset: { x: 50, y: -40 } });
+                }
+                // 清空上方大圈圈的實體靜態蘋果
+                topCircle.innerHTML = '';
+            }
+
+            let completedCount = 0;
+
+            // 逐一建立與驅動自由落體/拋物線動畫元件
+            configs.forEach((cfg, idx) => {
+                const el = document.createElement('div');
+                el.className = 'anim-apple';
+                el.innerHTML = cfg.color === 'red' ? redAppleSvg : blueAppleSvg;
+                el.style.display = 'block';
+                pool.appendChild(el);
+
+                // 使用二階貝茲曲線公式動態插值
+                const startTime = performance.now();
+                const duration = 750 + (idx * 60); // 錯開微調延遲，更有層次層次感
+
+                function animate(now) {
+                    const elapsed = now - startTime;
+                    const t = Math.min(elapsed / duration, 1);
+
+                    // 貝茲控制點計算
+                    const cp = {
+                        x: (cfg.start.x + cfg.end.x) / 2 + cfg.controlOffset.x,
+                        y: Math.min(cfg.start.y, cfg.end.y) + cfg.controlOffset.y
+                    };
+
+                    // P = (1-t)^2*P0 + 2(1-t)*t*P1 + t^2*P2
+                    const currX = (1 - t) * (1 - t) * cfg.start.x + 2 * (1 - t) * t * cp.x + t * t * cfg.end.x;
+                    const currY = (1 - t) * (1 - t) * cfg.start.y + 2 * (1 - t) * t * cp.y + t * t * cfg.end.y;
+
+                    el.style.left = `${currX}px`;
+                    el.style.top = `${currY}px`;
+                    
+                    // 縮放微動效果
+                    const scale = 1 + 0.3 * Math.sin(t * Math.PI);
+                    el.style.transform = `scale(${scale})`;
+
+                    if (t < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        completedCount++;
+                        if (completedCount === configs.length) {
+                            allAnimationsDone();
+                        }
+                    }
+                }
+                requestAnimationFrame(animate);
+            });
+        }
+
+        // 所有顆粒動畫抵達終點後的回調
+        function allAnimationsDone() {
+            document.getElementById('animation-apples-pool').innerHTML = '';
+            
+            // 將靜態實體蘋果塞回目的端容器，確保整齊排列
+            if (currentMode === 'compose') {
+                fillApples('#circle-top .main-circle', leftPart, 'red');
+                fillApples('#circle-top .main-circle', rightPart, 'blue');
+            } else {
+                fillApples('#circle-left .main-circle', leftPart, 'red');
+                fillApples('#circle-right .main-circle', rightPart, 'blue');
+            }
+
+            // 更新按鈕步進狀態
+            currentStep = 1;
+            const nextBtn = document.getElementById('next-step-btn');
+            nextBtn.disabled = false;
+            nextBtn.innerText = '顯示算式 ➔';
+        }
+
+        // 第二步：亮起算式與剩餘的數字標籤
+        function revealEquationsAndLabels() {
+            const eqContainer = document.getElementById('equation-display');
+            eqContainer.innerHTML = '';
+
+            if (currentMode === 'compose') {
+                // 亮起上方總量大標籤
+                const lblTop = document.getElementById('label-top');
+                lblTop.innerText = currentTotal;
+                lblTop.classList.add('visible');
+
+                // 注入彩色加法數式
+                eqContainer.innerHTML = `
+                    <span class="eq-part eq-red">${leftPart}</span>
+                    <span class="eq-part"> + </span>
+                    <span class="eq-part eq-blue">${rightPart}</span>
+                    <span class="eq-part"> = </span>
+                    <span class="eq-part eq-purple">${currentTotal}</span>
+                `;
+            } else {
+                // 亮起下方兩個分量標籤
+                const lblLeft = document.getElementById('label-left');
+                const lblRight = document.getElementById('label-right');
+                lblLeft.innerText = leftPart;
+                lblRight.innerText = rightPart;
+                lblLeft.classList.add('visible');
+                lblRight.classList.add('visible');
+
+                // 注入彩色減法數式
+                eqContainer.innerHTML = `
+                    <span class="eq-part eq-purple">${currentTotal}</span>
+                    <span class="eq-part"> - </span>
+                    <span class="eq-part eq-red">${leftPart}</span>
+                    <span class="eq-part"> = </span>
+                    <span class="eq-part eq-blue">${rightPart}</span>
+                `;
+            }
+
+            // 漸進式亮起數式文字效果
+            document.querySelectorAll('.eq-part').forEach((el, idx) => {
+                setTimeout(() => el.classList.add('visible'), idx * 150);
+            });
+
+            currentStep = 2;
+            const nextBtn = document.getElementById('next-step-btn');
+            nextBtn.innerText = '完成 🎉';
+            nextBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
