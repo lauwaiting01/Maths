@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數學形容詞比較教學 - 長短、高矮、闊窄、厚薄</title>
+    <!-- Tailwind CSS for smooth layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=KaiTi&family=Noto+Serif+TC:wght@600;900&display=swap');
+
+        body {
+            font-family: 'Noto Serif TC', 'KaiTi', '標楷體', serif;
+            background-color: #f8fafc;
+            touch-action: manipulation;
+        }
+
+        .card-title {
+            font-family: 'Noto Serif TC', 'KaiTi', '標楷體', serif;
+            font-weight: 900;
+        }
+
+        /* SVG animation transitions */
+        .anim-element {
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.8s ease, height 0.8s ease;
+            transform-origin: center;
+        }
+
+        /* Transform origin configurations for specific animations */
+        .origin-left-center { transform-origin: left center; }
+        .origin-bottom-center { transform-origin: center bottom; }
+        .origin-center { transform-origin: center center; }
+
+        /* Custom pulse shadow on hover */
+        .interactive-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .interactive-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Active highlight effect */
+        .card-active {
+            outline: 4px solid #3b82f6;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-6 select-none bg-slate-100">
+
+    <!-- Header & Controls -->
+    <header class="max-w-6xl w-full mx-auto mb-3 flex flex-wrap justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200 gap-3">
+        <div class="flex items-center gap-3">
+            <span class="text-3xl">📐</span>
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800">小學數學：形容詞對比（長短、高矮、闊窄、厚薄）</h1>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="triggerAllAnimations()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl shadow transition flex items-center gap-1 active:scale-95">
+                <span>▶️</span> 展示全部動畫
+            </button>
+            <button onclick="resetAllAnimations()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-xl transition active:scale-95">
+                🔄 重置狀態
+            </button>
+            <button onclick="toggleSpeechLang()" id="langBtn" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-2 px-3 rounded-xl transition text-sm border border-amber-300">
+                🗣️ 語音: 廣東話
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Grid: 2x2 layout matching exact user interface -->
+    <main class="max-w-6xl w-full mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 flex-grow">
+        
+        <!-- CARD 1: 長 / 短 (Pink Background) -->
+        <div id="card-long-short" onclick="toggleCard('long-short')" class="interactive-card bg-[#F4D0D0] border-2 border-[#E5B5B5] rounded-3xl p-4 md:p-6 flex items-center justify-between shadow-md relative overflow-hidden min-h-[220px]">
+            <div class="absolute top-2 right-3 text-xs text-rose-700/60 font-sans font-bold">點擊卡片播放動畫</div>
+            
+            <!-- Left Item: 長 (Long) -->
+            <div class="flex items-center gap-2 md:gap-4 flex-1">
+                <span onclick="event.stopPropagation(); speak('長')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">長</span>
+                
+                <!-- SVG Pencil Long -->
+                <div class="relative flex-1 max-w-[220px]">
+                    <svg id="pencil-long-svg" viewBox="0 0 200 60" class="w-full h-auto overflow-visible">
+                        <!-- Pencil Body -->
+                        <g id="pencil-long" class="anim-element origin-left-center">
+                            <!-- Pencil Eraser & Metal -->
+                            <rect x="160" y="20" width="20" height="20" rx="3" fill="#f43f5e"/>
+                            <rect x="150" y="20" width="10" height="20" fill="#cbd5e1"/>
+                            <!-- Main Blue Body -->
+                            <rect x="30" y="20" width="120" height="20" fill="#0284c7"/>
+                            <rect x="30" y="25" width="120" height="5" fill="#38bdf8"/>
+                            <!-- Tip -->
+                            <polygon points="30,20 10,30 30,40" fill="#fde047"/>
+                            <polygon points="17,26.5 10,30 17,33.5" fill="#1e293b"/>
+                        </g>
+                        <!-- Dimension Arrow Line -->
+                        <g id="arrow-long" class="anim-element origin-left-center">
+                            <line x1="10" y1="50" x2="180" y2="50" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="10" y1="45" x2="10" y2="55" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="180" y1="45" x2="180" y2="55" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="10,50 18,47 18,53" fill="#334155"/>
+                            <polygon points="180,50 172,47 172,53" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right Item: 短 (Short) -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <span onclick="event.stopPropagation(); speak('短')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">短</span>
+                
+                <!-- SVG Pencil Short -->
+                <div class="relative w-[110px] md:w-[130px]">
+                    <svg id="pencil-short-svg" viewBox="0 0 110 60" class="w-full h-auto overflow-visible">
+                        <g id="pencil-short" class="anim-element origin-left-center">
+                            <!-- Short Pencil Body -->
+                            <rect x="70" y="20" width="18" height="20" rx="3" fill="#f43f5e"/>
+                            <rect x="62" y="20" width="8" height="20" fill="#cbd5e1"/>
+                            <rect x="30" y="20" width="32" height="20" fill="#eab308"/>
+                            <rect x="30" y="25" width="32" height="5" fill="#fef08a"/>
+                            <polygon points="30,20 12,30 30,40" fill="#fed7aa"/>
+                            <polygon points="18,26.5 12,30 18,33.5" fill="#1e293b"/>
+                        </g>
+                        <!-- Dimension Arrow Line -->
+                        <g id="arrow-short" class="anim-element origin-left-center">
+                            <line x1="12" y1="50" x2="88" y2="50" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="12" y1="45" x2="12" y2="55" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="88" y1="45" x2="88" y2="55" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="12,50 18,47 18,53" fill="#334155"/>
+                            <polygon points="88,50 82,47 82,53" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 2: 高 / 矮 (Yellow Background) -->
+        <div id="card-tall-short" onclick="toggleCard('tall-short')" class="interactive-card bg-[#FEF3CD] border-2 border-[#EEDC9A] rounded-3xl p-4 md:p-6 flex items-center justify-between shadow-md relative overflow-hidden min-h-[220px]">
+            <div class="absolute top-2 right-3 text-xs text-amber-800/60 font-sans font-bold">點擊卡片播放動畫</div>
+
+            <!-- Left Item: 高 (Tall) -->
+            <div class="flex items-center gap-2 md:gap-4 flex-1">
+                <span onclick="event.stopPropagation(); speak('高')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">高</span>
+                
+                <!-- SVG Tall Tree -->
+                <div class="relative flex-1 h-[140px] flex items-end justify-center">
+                    <svg id="tree-tall-svg" viewBox="0 0 120 160" class="h-full w-auto overflow-visible">
+                        <!-- Tall Green Tree -->
+                        <g id="tree-tall" class="anim-element origin-bottom-center">
+                            <!-- Trunk -->
+                            <rect x="52" y="100" width="16" height="55" fill="#a16207" rx="2"/>
+                            <!-- Grass base -->
+                            <ellipse cx="60" cy="153" rx="35" ry="6" fill="#86efac"/>
+                            <!-- Foliage Layers -->
+                            <path d="M 60,10 L 95,65 L 80,65 L 100,105 L 20,105 L 40,65 L 25,65 Z" fill="#22c55e"/>
+                            <path d="M 60,10 L 95,65 L 75,65 L 90,95 L 30,95 L 45,65 L 25,65 Z" fill="#4ade80" opacity="0.4"/>
+                        </g>
+                        <!-- Height Arrow -->
+                        <g id="arrow-tall" class="anim-element origin-bottom-center">
+                            <line x1="10" y1="10" x2="10" y2="153" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="5" y1="10" x2="15" y2="10" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="5" y1="153" x2="15" y2="153" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="10,10 7,18 13,18" fill="#334155"/>
+                            <polygon points="10,153 7,145 13,145" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right Item: 矮 (Short Height) -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <span onclick="event.stopPropagation(); speak('矮')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">矮</span>
+                
+                <!-- SVG Short Tree -->
+                <div class="relative h-[110px] w-[110px] flex items-end justify-center">
+                    <svg id="tree-short-svg" viewBox="0 0 110 120" class="h-full w-auto overflow-visible">
+                        <g id="tree-short" class="anim-element origin-bottom-center">
+                            <!-- Trunk -->
+                            <rect x="47" y="65" width="16" height="40" fill="#a16207" rx="2"/>
+                            <!-- Grass Base -->
+                            <ellipse cx="55" cy="103" rx="30" ry="5" fill="#86efac"/>
+                            <!-- Round Foliage -->
+                            <circle cx="55" cy="50" r="32" fill="#15803d"/>
+                            <circle cx="45" cy="42" r="22" fill="#22c55e"/>
+                            <!-- Yellow fruits/dots -->
+                            <circle cx="42" cy="55" r="4" fill="#facc15"/>
+                            <circle cx="65" cy="40" r="4" fill="#facc15"/>
+                            <circle cx="68" cy="62" r="4" fill="#facc15"/>
+                        </g>
+                        <!-- Height Arrow -->
+                        <g id="arrow-tree-short" class="anim-element origin-bottom-center">
+                            <line x1="100" y1="18" x2="100" y2="103" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="95" y1="18" x2="105" y2="18" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="95" y1="103" x2="105" y2="103" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="100,18 97,25 103,25" fill="#334155"/>
+                            <polygon points="100,103 97,96 103,96" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3: 闊 / 窄 (Blue Background) -->
+        <div id="card-wide-narrow" onclick="toggleCard('wide-narrow')" class="interactive-card bg-[#D6E6F5] border-2 border-[#B9D3EA] rounded-3xl p-4 md:p-6 flex items-center justify-between shadow-md relative overflow-hidden min-h-[220px]">
+            <div class="absolute top-2 right-3 text-xs text-sky-800/60 font-sans font-bold">點擊卡片播放動畫</div>
+
+            <!-- Left Item: 闊 (Wide) -->
+            <div class="flex items-center gap-2 md:gap-4 flex-1">
+                <span onclick="event.stopPropagation(); speak('闊')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">闊</span>
+                
+                <!-- SVG Wide Double Door -->
+                <div class="relative flex-1 max-w-[210px] h-[130px] flex items-center justify-center">
+                    <svg id="door-wide-svg" viewBox="0 0 180 130" class="h-full w-full overflow-visible">
+                        <g id="door-wide" class="anim-element origin-center">
+                            <!-- Frame -->
+                            <rect x="10" y="10" width="160" height="100" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+                            <!-- Left Door Leaf -->
+                            <rect x="15" y="15" width="72" height="90" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+                            <rect x="25" y="25" width="52" height="30" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+                            <circle cx="80" cy="65" r="4" fill="#fef08a"/>
+                            <!-- Right Door Leaf -->
+                            <rect x="93" y="15" width="72" height="90" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+                            <rect x="103" y="25" width="52" height="30" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+                            <circle cx="100" cy="65" r="4" fill="#fef08a"/>
+                        </g>
+                        <!-- Width Arrow -->
+                        <g id="arrow-wide" class="anim-element origin-center">
+                            <line x1="10" y1="120" x2="170" y2="120" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="10" y1="115" x2="10" y2="125" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="170" y1="115" x2="170" y2="125" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="10,120 18,117 18,123" fill="#334155"/>
+                            <polygon points="170,120 162,117 162,123" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right Item: 窄 (Narrow) -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <span onclick="event.stopPropagation(); speak('窄')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">窄</span>
+                
+                <!-- SVG Narrow Single Door -->
+                <div class="relative h-[130px] w-[90px] flex items-center justify-center">
+                    <svg id="door-narrow-svg" viewBox="0 0 90 130" class="h-full w-full overflow-visible">
+                        <g id="door-narrow" class="anim-element origin-center">
+                            <!-- Frame -->
+                            <rect x="15" y="10" width="60" height="100" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+                            <!-- Single Door -->
+                            <rect x="20" y="15" width="50" height="90" fill="#06b6d4" stroke="#0891b2" stroke-width="2"/>
+                            <rect x="28" y="25" width="34" height="30" fill="#e0f2fe" stroke="#38bdf8" stroke-width="1.5"/>
+                            <circle cx="62" cy="65" r="3.5" fill="#fef08a"/>
+                        </g>
+                        <!-- Width Arrow -->
+                        <g id="arrow-narrow" class="anim-element origin-center">
+                            <line x1="15" y1="120" x2="75" y2="120" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="15" y1="115" x2="15" y2="125" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="75" y1="115" x2="75" y2="125" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="15,120 21,117 21,123" fill="#334155"/>
+                            <polygon points="75,120 69,117 69,123" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 4: 厚 / 薄 (Green Background) -->
+        <div id="card-thick-thin" onclick="toggleCard('thick-thin')" class="interactive-card bg-[#DCEDD9] border-2 border-[#BCD8B8] rounded-3xl p-4 md:p-6 flex items-center justify-between shadow-md relative overflow-hidden min-h-[220px]">
+            <div class="absolute top-2 right-3 text-xs text-emerald-800/60 font-sans font-bold">點擊卡片播放動畫</div>
+
+            <!-- Left Item: 厚 (Thick) -->
+            <div class="flex items-center gap-2 md:gap-4 flex-1">
+                <span onclick="event.stopPropagation(); speak('厚')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">厚</span>
+                
+                <!-- SVG Thick Book -->
+                <div class="relative flex-1 max-w-[200px] h-[130px] flex items-center justify-center">
+                    <svg id="book-thick-svg" viewBox="0 0 180 130" class="h-full w-full overflow-visible">
+                        <g id="book-thick" class="anim-element origin-center">
+                            <!-- Book Thick Pages (Stack) -->
+                            <rect x="25" y="40" width="125" height="50" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" rx="3"/>
+                            <!-- Page Lines Texture -->
+                            <line x1="25" y1="48" x2="150" y2="48" stroke="#e2e8f0" stroke-width="2"/>
+                            <line x1="25" y1="56" x2="150" y2="56" stroke="#cbd5e1" stroke-width="1.5"/>
+                            <line x1="25" y1="64" x2="150" y2="64" stroke="#e2e8f0" stroke-width="2"/>
+                            <line x1="25" y1="72" x2="150" y2="72" stroke="#cbd5e1" stroke-width="1.5"/>
+                            <line x1="25" y1="80" x2="150" y2="80" stroke="#e2e8f0" stroke-width="2"/>
+                            
+                            <!-- Thick Cover (Top & Spine) -->
+                            <path d="M 20,35 Q 85,25 155,35 L 155,42 Q 85,32 20,42 Z" fill="#4338ca"/>
+                            <path d="M 20,90 Q 85,98 155,90 L 155,95 Q 85,103 20,95 Z" fill="#3730a3"/>
+                            <!-- Book Cover Art -->
+                            <polygon points="87,20 102,32 72,32" fill="#f43f5e"/>
+                            <rect x="20" y="35" width="12" height="57" rx="3" fill="#312e81"/>
+                        </g>
+                        <!-- Thickness Arrow -->
+                        <g id="arrow-thick" class="anim-element origin-center">
+                            <line x1="168" y1="35" x2="168" y2="95" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="162" y1="35" x2="174" y2="35" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="162" y1="95" x2="174" y2="95" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="168,35 165,43 171,43" fill="#334155"/>
+                            <polygon points="168,95 165,87 171,87" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right Item: 薄 (Thin) -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <span onclick="event.stopPropagation(); speak('薄')" class="card-title text-5xl md:text-6xl text-slate-900 hover:text-indigo-600 transition cursor-pointer hover:scale-110 active:scale-95" title="點擊發音">薄</span>
+                
+                <!-- SVG Thin Book -->
+                <div class="relative h-[130px] w-[130px] flex items-center justify-center">
+                    <svg id="book-thin-svg" viewBox="0 0 130 130" class="h-full w-full overflow-visible">
+                        <g id="book-thin" class="anim-element origin-center">
+                            <!-- Thin Pages -->
+                            <rect x="15" y="62" width="90" height="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" rx="1"/>
+                            <!-- Thin Covers -->
+                            <rect x="12" y="58" width="96" height="4" fill="#ea580c" rx="1"/>
+                            <rect x="12" y="72" width="96" height="4" fill="#c2410c" rx="1"/>
+                            <!-- Cover Logo -->
+                            <circle cx="60" cy="60" r="2" fill="#fef08a"/>
+                        </g>
+                        <!-- Thin Arrow -->
+                        <g id="arrow-thin" class="anim-element origin-center">
+                            <line x1="118" y1="58" x2="118" y2="76" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>
+                            <line x1="113" y1="58" x2="123" y2="58" stroke="#334155" stroke-width="1.5"/>
+                            <line x1="113" y1="76" x2="123" y2="76" stroke="#334155" stroke-width="1.5"/>
+                            <polygon points="118,58 115,63 121,63" fill="#334155"/>
+                            <polygon points="118,76 115,71 121,71" fill="#334155"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Interactive Prompt Banner Footer -->
+    <footer class="max-w-6xl w-full mx-auto mt-4 bg-white/80 backdrop-blur p-3 rounded-xl border border-slate-200 text-center text-slate-600 text-sm md:text-base font-medium shadow-sm">
+        💡 提示：點擊任意組合卡片觀看動態伸展特效；點擊文字「長、短、高、矮...」可真人語音發音！
+    </footer>
+
+    <!-- Audio Synth & Interaction Logic -->
+    <script>
+        // State tracking for each card animation
+        const state = {
+            'long-short': false,
+            'tall-short': false,
+            'wide-narrow': false,
+            'thick-thin': false
+        };
+
+        let speechLang = 'zh-HK'; // Default Cantonese speech
+
+        function toggleSpeechLang() {
+            const btn = document.getElementById('langBtn');
+            if (speechLang === 'zh-HK') {
+                speechLang = 'zh-TW';
+                btn.innerHTML = '🗣️ 語音: 普通話';
+            } else {
+                speechLang = 'zh-HK';
+                btn.innerHTML = '🗣️ 語音: 廣東話';
+            }
+        }
+
+        // Text-to-speech function
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel previous speaking
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = speechLang;
+                utterance.rate = 0.85; // Slightly slower for primary teaching
+                utterance.pitch = 1.1;
+
+                // Play simple pop sound fallback using Web Audio API
+                playTone(440, 0.08);
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Simple audio chime generator
+        function playTone(freq, duration) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch(e) {
+                // Ignore audio errors
+            }
+        }
+
+        // Toggle animation on specific card click
+        function toggleCard(type) {
+            state[type] = !state[type];
+            applyAnimation(type, state[type]);
+
+            // Pronounce words on card click
+            if (type === 'long-short') speak(state[type] ? '長，短' : '長短');
+            if (type === 'tall-short') speak(state[type] ? '高，矮' : '高矮');
+            if (type === 'wide-narrow') speak(state[type] ? '闊，窄' : '闊窄');
+            if (type === 'thick-thin') speak(state[type] ? '厚，薄' : '厚薄');
+        }
+
+        // Apply transformations based on active state
+        function applyAnimation(type, isActive) {
+            if (type === 'long-short') {
+                const pencilLong = document.getElementById('pencil-long');
+                const arrowLong = document.getElementById('arrow-long');
+                const pencilShort = document.getElementById('pencil-short');
+                const arrowShort = document.getElementById('arrow-short');
+
+                if (isActive) {
+                    // Long stretches longer, short shrinks smaller
+                    pencilLong.style.transform = 'scaleX(1.35)';
+                    arrowLong.style.transform = 'scaleX(1.35)';
+                    pencilShort.style.transform = 'scaleX(0.65)';
+                    arrowShort.style.transform = 'scaleX(0.65)';
+                } else {
+                    pencilLong.style.transform = 'scaleX(1)';
+                    arrowLong.style.transform = 'scaleX(1)';
+                    pencilShort.style.transform = 'scaleX(1)';
+                    arrowShort.style.transform = 'scaleX(1)';
+                }
+            }
+
+            if (type === 'tall-short') {
+                const treeTall = document.getElementById('tree-tall');
+                const arrowTall = document.getElementById('arrow-tall');
+                const treeShort = document.getElementById('tree-short');
+                const arrowTreeShort = document.getElementById('arrow-tree-short');
+
+                if (isActive) {
+                    // Tall grows taller, short shrinks lower
+                    treeTall.style.transform = 'scaleY(1.3)';
+                    arrowTall.style.transform = 'scaleY(1.3)';
+                    treeShort.style.transform = 'scaleY(0.7)';
+                    arrowTreeShort.style.transform = 'scaleY(0.7)';
+                } else {
+                    treeTall.style.transform = 'scaleY(1)';
+                    arrowTall.style.transform = 'scaleY(1)';
+                    treeShort.style.transform = 'scaleY(1)';
+                    arrowTreeShort.style.transform = 'scaleY(1)';
+                }
+            }
+
+            if (type === 'wide-narrow') {
+                const doorWide = document.getElementById('door-wide');
+                const arrowWide = document.getElementById('arrow-wide');
+                const doorNarrow = document.getElementById('door-narrow');
+                const arrowNarrow = document.getElementById('arrow-narrow');
+
+                if (isActive) {
+                    // Wide stretches wider horizontally, narrow becomes even narrower
+                    doorWide.style.transform = 'scaleX(1.3)';
+                    arrowWide.style.transform = 'scaleX(1.3)';
+                    doorNarrow.style.transform = 'scaleX(0.6)';
+                    arrowNarrow.style.transform = 'scaleX(0.6)';
+                } else {
+                    doorWide.style.transform = 'scaleX(1)';
+                    arrowWide.style.transform = 'scaleX(1)';
+                    doorNarrow.style.transform = 'scaleX(1)';
+                    arrowNarrow.style.transform = 'scaleX(1)';
+                }
+            }
+
+            if (type === 'thick-thin') {
+                const bookThick = document.getElementById('book-thick');
+                const arrowThick = document.getElementById('arrow-thick');
+                const bookThin = document.getElementById('book-thin');
+                const arrowThin = document.getElementById('arrow-thin');
+
+                if (isActive) {
+                    // Thick expands vertically, thin compresses thinner
+                    bookThick.style.transform = 'scaleY(1.4)';
+                    arrowThick.style.transform = 'scaleY(1.4)';
+                    bookThin.style.transform = 'scaleY(0.5)';
+                    arrowThin.style.transform = 'scaleY(0.5)';
+                } else {
+                    bookThick.style.transform = 'scaleY(1)';
+                    arrowThick.style.transform = 'scaleY(1)';
+                    bookThin.style.transform = 'scaleY(1)';
+                    arrowThin.style.transform = 'scaleY(1)';
+                }
+            }
+        }
+
+        // Trigger all animations sequentially for classroom demonstration
+        function triggerAllAnimations() {
+            const keys = Object.keys(state);
+            keys.forEach((key, idx) => {
+                setTimeout(() => {
+                    state[key] = true;
+                    applyAnimation(key, true);
+                    playTone(520 + idx * 100, 0.1);
+                }, idx * 350);
+            });
+            speak("長短，高矮，闊窄，厚薄");
+        }
+
+        // Reset all animations to default initial state
+        function resetAllAnimations() {
+            Object.keys(state).forEach(key => {
+                state[key] = false;
+                applyAnimation(key, false);
+            });
+            playTone(300, 0.15);
+        }
+    </script>
+</body>
+</html>
