@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>可愛排隊排序學習遊戲</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
+            background-color: #f7f9fc;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 上部 2/3 顯示區 */
+        .display-area {
+            height: 66.66vh;
+            width: 100%;
+            position: relative;
+            background: linear-gradient(to bottom, #e0f2fe, #f0fdf4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* 前後指示牌 */
+        .direction-banner {
+            position: absolute;
+            top: 25px;
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .sign {
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 10px 30px;
+            border-radius: 50px;
+            box-shadow: 0 6px 0 #d94545;
+            border: 4px solid white;
+        }
+        .sign.back {
+            background-color: #a855f7;
+            box-shadow: 0 6px 0 #7e22ce;
+        }
+
+        /* 隊伍容器 */
+        .queue-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+            gap: 20px;
+            padding-bottom: 20px;
+            margin-top: 40px;
+        }
+        .queue-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 110px;
+        }
+        .item-name {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 12px;
+            border: 2px solid #cbd5e1;
+            white-space: nowrap;
+        }
+        .sprite-wrapper {
+            height: 140px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .sprite-wrapper svg {
+            width: 100px;
+            height: 130px;
+            filter: drop-shadow(0 6px 4px rgba(0,0,0,0.1));
+        }
+        .sprite-wrapper.facing-left svg {
+            transform: scaleX(1);
+        }
+        .sprite-wrapper.facing-right svg {
+            transform: scaleX(-1);
+        }
+
+        /* 下部 1/3 拖拉互動區 */
+        .interaction-area {
+            height: 33.33vh;
+            width: 100%;
+            background-color: #ffffff;
+            border-top: 6px dashed #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 20px;
+            position: relative;
+        }
+
+        /* 箭頭與答案線容器，需要完美與上方對齊 */
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            gap: 20px;
+        }
+        .slot-box {
+            width: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .arrow-up {
+            font-size: 32px;
+            color: #ef4444;
+            line-height: 1;
+            margin-bottom: 5px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* 橫向排版：第一個 */
+        .text-line {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            background: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 2px dashed #94a3b8;
+            width: 100%;
+        }
+        .drop-target {
+            width: 44px;
+            height: 44px;
+            background-color: #e2e8f0;
+            border: 3px solid #cbd5e1;
+            border-radius: 10px;
+            margin: 0 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .drop-target.filled {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);
+        }
+        .drop-target.error {
+            background-color: #fca5a5 !important;
+            border-color: #ef4444 !important;
+            animation: shake 0.3s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* 可拖拉選項容器 */
+        .options-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            width: 100%;
+            max-height: 55%;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .drag-option {
+            width: 55px;
+            height: 55px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            cursor: grab;
+            touch-action: none;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .drag-option:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        /* 中國數字：深藍色 */
+        .opt-zh {
+            background-color: #1e3a8a;
+            border: 3px solid #172554;
+            box-shadow: 0 5px 0 #172554;
+        }
+        /* 阿拉伯數字：橙紅色 */
+        .opt-en {
+            background-color: #ea580c;
+            border: 3px solid #9a3412;
+            box-shadow: 0 5px 0 #9a3412;
+        }
+        .drag-option.dragging {
+            opacity: 0.5;
+        }
+
+        /* 下一題按鈕 */
+        .next-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            background-color: #22c55e;
+            color: white;
+            border: 4px solid white;
+            padding: 12px 30px;
+            font-size: 26px;
+            font-weight: bold;
+            border-radius: 50px;
+            box-shadow: 0 6px 0 #15803d, 0 10px 20px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+        }
+        .next-btn:hover {
+            background-color: #16a34a;
+        }
+        .next-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #15803d;
+        }
+
+        /* 頂部題目進度 */
+        .title-banner {
+            position: absolute;
+            top: 20px;
+            background-color: rgba(255,255,255,0.85);
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="display-area">
+        <div class="title-banner" id="titleBanner">第 1 題 (排隊學習)</div>
+        <div class="direction-banner">
+            <div class="sign" id="leftSign">前</div>
+            <div class="sign back" id="rightSign">後</div>
+        </div>
+        <div class="queue-container" id="queueContainer"></div>
+    </div>
+
+    <div class="interaction-area">
+        <div class="slots-container" id="slotsContainer"></div>
+        <div class="options-container" id="optionsContainer"></div>
+        <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 ➔</button>
+    </div>
+
+    <script>
+        const names = ["小明", "小紅", "小華", "小強", "阿寶", "欣欣", "樂樂", "晴晴", "多多", "安安", "卡卡", "東東"];
+        const zhNumbers = ["一", "二", "三", "四", "五", "六", "七", "八"];
+        const enNumbers = ["1", "2", "3", "4", "5", "6", "7", "8"];
+        
+        let currentQuestion = 1;
+        let queueLength = 5;
+        let isFacingLeft = true; 
+        let currentType = 'children'; // 'children', 'cars', 'animals'
+        let currentUnit = '個';
+        
+        let missingIndexes = []; // 需要填空的索引（0為最前）
+        let correctAnswers = {}; // targetId -> correct text
+        let draggedElement = null;
+
+        // SVG 樣式模板
+        function getChildSVG(colorSeed) {
+            const hues = [0, 30, 160, 210, 280, 330];
+            const hairHue = hues[colorSeed % hues.length];
+            const clothHue = hues[(colorSeed + 2) % hues.length];
+            return `<svg viewBox="0 0 100 130">
+                <!-- 腳鞋子明顯朝向左邊 -->
+                <ellipse cx="35" cy="122" rx="14" ry="6" fill="#475569"/>
+                <ellipse cx="60" cy="122" rx="10" ry="6" fill="#475569"/>
+                <!-- 身體/衣服 稍微側向左邊 -->
+                <path d="M25,80 C25,70 40,65 50,65 C65,65 75,70 75,80 L70,118 L30,118 Z" fill="hsl(${clothHue}, 85%, 65%)"/>
+                <circle cx="50" cy="45" r="24" fill="#ffdad4"/>
+                <!-- 頭髮明顯有側面與後腦勺厚度 -->
+                <path d="M24,45 C24,20 76,20 76,45 C76,22 35,15 24,45 Z" fill="hsl(${hairHue}, 70%, 25%)"/>
+                <path d="M65,35 C75,35 82,45 80,55 C74,50 70,45 65,35 Z" fill="hsl(${hairHue}, 70%, 25%)"/>
+                <!-- 五官明顯全部偏向左側(前方) -->
+                <circle cx="34" cy="45" r="3.5" fill="#1e293b"/>
+                <circle cx="48" cy="45" r="3.5" fill="#1e293b"/>
+                <ellipse cx="28" cy="45" rx="2" ry="4" fill="#ffb3a7"/>
+                <path d="M30,56 Q36,62 42,56" stroke="#e11d48" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </svg>`;
+        }
+
+        function getCarSVG(colorSeed) {
+            const hues = [0, 45, 130, 200, 270, 320];
+            const carHue = hues[colorSeed % hues.length];
+            return `<svg viewBox="0 0 120 130">
+                <!-- 輪胎 -->
+                <circle cx="35" cy="105" r="14" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>
+                <circle cx="85" cy="105" r="14" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>
+                <!-- 車身：左側是明顯突出的車頭，右側是較高的車尾 -->
+                <path d="M10,95 L15,75 Q20,65 35,65 L50,65 Q60,35 75,35 L105,35 Q115,35 115,60 L115,95 Z" fill="hsl(${carHue}, 85%, 55%)"/>
+                <!-- 車窗 -->
+                <path d="M55,65 L72,43 L98,43 L98,65 Z" fill="#e0f2fe"/>
+                <!-- 左側車頭大燈(非常明顯向左) -->
+                <path d="M10,75 L5,80 L10,85 Z" fill="#fef08a" stroke="#facc15" stroke-width="2"/>
+                <!-- 右側車尾燈 -->
+                <rect x="110" y="70" width="5" height="12" rx="2" fill="#ef4444"/>
+            </svg>`;
+        }
+
+        function getAnimalSVG(colorSeed) {
+            const types = ['panda', 'rabbit', 'bear'];
+            const type = types[colorSeed % types.length];
+            if(type === 'panda') {
+                return `<svg viewBox="0 0 100 130">
+                    <!-- 腳 -->
+                    <circle cx="35" cy="115" r="10" fill="#1e293b"/>
+                    <circle cx="65" cy="115" r="10" fill="#1e293b"/>
+                    <!-- 身體 -->
+                    <circle cx="50" cy="85" r="26" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+                    <path d="M26,75 Q50,65 74,75 L70,95 L30,95 Z" fill="#1e293b"/>
+                    <!-- 頭 -->
+                    <circle cx="46" cy="45" r="22" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+                    <!-- 圓耳朵偏向右與頂 -->
+                    <circle cx="30" cy="26" r="7" fill="#1e293b"/>
+                    <circle cx="62" cy="26" r="7" fill="#1e293b"/>
+                    <!-- 眼睛全部看左邊(左側大黑眼圈) -->
+                    <ellipse cx="36" cy="44" rx="6" ry="8" fill="#1e293b"/>
+                    <circle cx="35" cy="44" r="2.5" fill="#ffffff"/>
+                    <ellipse cx="54" cy="44" rx="4" ry="6" fill="#1e293b"/>
+                    <circle cx="53" cy="44" r="1.5" fill="#ffffff"/>
+                    <!-- 鼻子嘴巴在最左側 -->
+                    <polygon points="26,48 30,46 30,50" fill="#1e293b"/>
+                    <!-- 尾巴在右邊 -->
+                    <circle cx="76" cy="90" r="6" fill="#1e293b"/>
+                </svg>`;
+            } else {
+                return `<svg viewBox="0 0 100 130">
+                    <!-- 兔子/熊 腳 -->
+                    <ellipse cx="35" cy="116" rx="11" ry="7" fill="#f43f5e"/>
+                    <ellipse cx="65" cy="116" rx="9" ry="6" fill="#f43f5e"/>
+                    <!-- 身體 -->
+                    <circle cx="50" cy="85" r="25" fill="#fda4af"/>
+                    <!-- 頭 -->
+                    <circle cx="45" cy="45" r="22" fill="#fda4af"/>
+                    <!-- 長耳朵靠右朝上 -->
+                    <ellipse cx="36" cy="18" rx="5" ry="14" fill="#fda4af" transform="rotate(-10 36 18)"/>
+                    <ellipse cx="54" cy="20" rx="5" ry="14" fill="#fda4af" transform="rotate(10 54 20)"/>
+                    <!-- 腮紅跟大眼睛看左邊 -->
+                    <circle cx="32" cy="44" r="3.5" fill="#1e293b"/>
+                    <circle cx="48" cy="44" r="3.5" fill="#1e293b"/>
+                    <circle cx="26" cy="50" r="4" fill="#f43f5e" opacity="0.6"/>
+                    <path d="M28,54 Q32,57 36,54" stroke="#fff" stroke-width="2" fill="none"/>
+                    <!-- 小尾巴在右邊 -->
+                    <circle cx="75" cy="90" r="7" fill="#fda4af"/>
+                </svg>`;
+            }
+        }
+
+        function initGame() {
+            // 1. 決定題目類型
+            if (currentQuestion <= 3) {
+                currentType = 'children';
+                currentUnit = '個';
+            } else {
+                currentType = Math.random() > 0.5 ? 'cars' : 'animals';
+                currentUnit = currentType === 'cars' ? '輛' : '隻';
+            }
+            
+            document.getElementById("titleBanner").innerText = `第 ${currentQuestion} 題 (${currentType === 'children' ? '小朋友' : currentType === 'cars' ? '小汽車' : '小動物'}排隊)`;
+
+            // 2. 決定人數與面向 (隨機 4 - 8)
+            queueLength = Math.floor(Math.random() * 5) + 4; 
+            isFacingLeft = Math.random() > 0.5;
+
+            // 更新前後牌子
+            if (isFacingLeft) {
+                document.getElementById("leftSign").innerText = "前";
+                document.getElementById("leftSign").className = "sign";
+                document.getElementById("rightSign").innerText = "後";
+                document.getElementById("rightSign").className = "sign back";
+            } else {
+                document.getElementById("leftSign").innerText = "後";
+                document.getElementById("leftSign").className = "sign back";
+                document.getElementById("rightSign").innerText = "前";
+                document.getElementById("rightSign").className = "sign";
+            }
+
+            // 3. 挑選要空出來的格子 (隨機空出 2 到 3 個)
+            const numMissing = Math.floor(Math.random() * 2) + 2; 
+            missingIndexes = [];
+            while(missingIndexes.length < numMissing) {
+                let r = Math.floor(Math.random() * queueLength);
+                if(!missingIndexes.includes(r)) {
+                    missingIndexes.push(r);
+                }
+            }
+
+            // 清空舊畫面
+            const queueContainer = document.getElementById("queueContainer");
+            const slotsContainer = document.getElementById("slotsContainer");
+            const optionsContainer = document.getElementById("optionsContainer");
+            queueContainer.innerHTML = "";
+            slotsContainer.innerHTML = "";
+            optionsContainer.innerHTML = "";
+            document.getElementById("nextBtn").style.display = "none";
+            correctAnswers = {};
+
+            // 4. 建立排列隊伍與下方的箭頭答案線
+            // 生成隨機名字清單避免重複
+            let shuffledNames = [...names].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < queueLength; i++) {
+                // 計算從「前」數過來是第幾個 (0-indexed -> 1-indexed 中國數字)
+                // 如果面向左，左邊是前，索引 i 就是第 i+1 個
+                // 如果面向右，右邊是前，索引 i 則是第 queueLength - i 個
+                let indexFromFront = isFacingLeft ? i : (queueLength - 1 - i);
+                let correctZh = zhNumbers[indexFromFront];
+
+                // --- 上部隊伍渲染 ---
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "queue-item";
+                
+                // 名字標籤（如果是車子就顯示車牌顏色或編號）
+                const nameLabel = document.createElement("div");
+                nameLabel.className = "item-name";
+                nameLabel.innerText = currentType === 'children' ? shuffledNames[i] : currentType === 'cars' ? `BB-${i+1}` : `小${zhNumbers[i]}`;
+                itemDiv.appendChild(nameLabel);
+
+                // 圖案
+                const spriteWrapper = document.createElement("div");
+                spriteWrapper.className = `sprite-wrapper ${isFacingLeft ? 'facing-left' : 'facing-right'}`;
+                
+                if(currentType === 'children') {
+                    spriteWrapper.innerHTML = getChildSVG(i + currentQuestion);
+                } else if(currentType === 'cars') {
+                    spriteWrapper.innerHTML = getCarSVG(i + currentQuestion * 3);
+                } else {
+                    spriteWrapper.innerHTML = getAnimalSVG(i + currentQuestion * 2);
+                }
+                itemDiv.appendChild(spriteWrapper);
+                queueContainer.appendChild(itemDiv);
+
+                // --- 下部互動區：箭頭與橫向答案線 ---
+                const slotBox = document.createElement("div");
+                slotBox.className = "slot-box";
+
+                const arrow = document.createElement("div");
+                arrow.className = "arrow-up";
+                arrow.innerText = "⬆";
+                slotBox.appendChild(arrow);
+
+                const textLine = document.createElement("div");
+                textLine.className = "text-line";
+                
+                const targetId = `target-${i}`;
+                
+                if (missingIndexes.includes(indexFromFront)) {
+                    // 需要填空
+                    correctAnswers[targetId] = correctZh;
+                    textLine.innerHTML = `第<div class="drop-target" id="${targetId}" data-index="${indexFromFront}"></div>${currentUnit}`;
+                } else {
+                    // 固定顯示正確答案
+                    textLine.innerHTML = `第<div class="drop-target filled" style="background-color:#64748b; border-color:#475569;">${correctZh}</div>${currentUnit}`;
+                }
+                
+                slotBox.appendChild(textLine);
+                slotsContainer.appendChild(slotBox);
+            }
+
+            // 5. 準備答案卡片選項 (必須包含正確的中國數字、一些錯誤的阿拉伯數字，且總數比空格多 1-3 個)
+            let neededAnswers = missingIndexes.map(idx => zhNumbers[idx]);
+            let availableWrongZh = zhNumbers.filter(num => !neededAnswers.includes(num));
+            let allWrongEn = enNumbers; // 阿拉伯數字全部都是錯的
+            
+            // 決定需要多出幾個選項卡 (1 到 3 個)
+            const extraCount = Math.floor(Math.random() * 3) + 1;
+            let optionsPool = [];
+
+            // 先放入所有絕對正確的答案
+            neededAnswers.forEach(ans => {
+                optionsPool.push({ text: ans, type: 'zh' });
+            });
+
+            // 填充隨機干擾項
+            for(let k = 0; k < extraCount; k++) {
+                if(Math.random() > 0.5 && availableWrongZh.length > 0) {
+                    // 放入錯誤的中國數字
+                    let rIdx = Math.floor(Math.random() * availableWrongZh.length);
+                    optionsPool.push({ text: availableWrongZh[rIdx], type: 'zh' });
+                    availableWrongZh.splice(rIdx, 1);
+                } else {
+                    // 放入阿拉伯數字干擾
+                    let rIdx = Math.floor(Math.random() * allWrongEn.length);
+                    optionsPool.push({ text: allWrongEn[rIdx], type: 'en' });
+                    allWrongEn.splice(rIdx, 1);
+                }
+            }
+            
+            // 如果還不夠（預防空格很少的情況下干擾項不足），再補滿阿拉伯數字卡片
+            while(optionsPool.length < neededAnswers.length + extraCount) {
+                let rIdx = Math.floor(Math.random() * enNumbers.length);
+                if(!optionsPool.some(o => o.text === enNumbers[rIdx])) {
+                    optionsPool.push({ text: enNumbers[rIdx], type: 'en' });
+                }
+            }
+
+            // 打亂選項卡順序
+            optionsPool.sort(() => Math.random() - 0.5);
+
+            // 渲染選項卡至介面
+            optionsPool.forEach((opt, idx) => {
+                const optDiv = document.createElement("div");
+                optDiv.className = `drag-option ${opt.type === 'zh' ? 'opt-zh' : 'opt-en'}`;
+                optDiv.innerText = opt.text;
+                optDiv.draggable = true;
+                optDiv.id = `opt-${idx}`;
+                
+                // 滑鼠拖拽事件
+                optDiv.addEventListener("dragstart", dragStart);
+                optDiv.addEventListener("dragend", dragEnd);
+                
+                // 行動裝置觸控事件支援
+                optDiv.addEventListener("touchstart", handleTouchStart, {passive: false});
+                optDiv.addEventListener("touchmove", handleTouchMove, {passive: false});
+                optDiv.addEventListener("touchend", handleTouchEnd, {passive: false});
+
+                optionsContainer.appendChild(optDiv);
+            });
+
+            // 設置投放目標事件
+            document.querySelectorAll(".drop-target:not(.filled)").forEach(target => {
+                target.addEventListener("dragover", dragOver);
+                target.addEventListener("drop", dropRelease);
+            });
+        }
+
+        // --- 電腦端拖放邏輯 ---
+        function dragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add("dragging");
+        }
+
+        function dragEnd(e) {
+            e.target.classList.remove("dragging");
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function dropRelease(e) {
+            e.preventDefault();
+            const target = e.target.classList.contains("drop-target") ? e.target : e.target.closest(".drop-target");
+            if (!target || target.classList.contains("filled")) return;
+
+            verifyAnswer(draggedElement, target);
+        }
+
+        // --- 核心驗證邏輯 ---
+        function verifyAnswer(optionEl, targetEl) {
+            if (!optionEl || !targetEl) return;
+            
+            const targetId = targetEl.id;
+            const chosenText = optionEl.innerText;
+            const correctText = correctAnswers[targetId];
+
+            if (chosenText === correctText) {
+                // 答對了！
+                targetEl.innerText = chosenText;
+                targetEl.classList.add("filled");
+                targetEl.classList.remove("error");
+                
+                // 移除原有的選項卡片並隱藏
+                optionEl.style.pointerEvents = "none";
+                optionEl.style.opacity = "0";
+                setTimeout(() => optionEl.remove(), 200);
+                
+                // 檢查是否所有空格都填滿了
+                checkMissionComplete();
+            } else {
+                // 答錯了，觸發警示動畫
+                targetEl.classList.add("error");
+                setTimeout(() => {
+                    targetEl.classList.remove("error");
+                }, 400);
+            }
+        }
+
+        function checkMissionComplete() {
+            const allTargets = document.querySelectorAll(".drop-target");
+            let allCorrect = true;
+            allTargets.forEach(t => {
+                if(!t.classList.contains("filled")) {
+                    allCorrect = false;
+                }
+            });
+
+            if (allCorrect) {
+                // 顯示下一題按鈕
+                document.getElementById("nextBtn").style.display = "block";
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            initGame();
+        }
+
+        // --- 行動裝置/觸控端極致流暢拖拽優化 ---
+        let touchStartPos = { x: 0, y: 0 };
+        let activeTouchElement = null;
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            activeTouchElement = e.target;
+            const touch = e.touches[0];
+            touchStartPos = { x: touch.clientX, y: touch.clientY };
+            
+            activeTouchElement.style.position = 'fixed';
+            activeTouchElement.style.zIndex = '1000';
+            moveElementAt(touch.clientX, touch.clientY);
+        }
+
+        function handleTouchMove(e) {
+            if (!activeTouchElement) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            moveElementAt(touch.clientX, touch.clientY);
+        }
+
+        function handleTouchEnd(e) {
+            if (!activeTouchElement) return;
+            e.preventDefault();
+            
+            const element = activeTouchElement;
+            activeTouchElement = null;
+            
+            // 還原基本定位以精準檢測釋放點元素
+            element.style.display = 'none';
+            const changedTouch = e.changedTouches[0];
+            const dropTarget = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+            element.style.display = 'flex';
+
+            // 還原卡片樣式
+            element.style.position = 'static';
+            element.style.zIndex = 'auto';
+
+            if (dropTarget && (dropTarget.classList.contains("drop-target") || dropTarget.closest(".drop-target"))) {
+                const finalTarget = dropTarget.classList.contains("drop-target") ? dropTarget : dropTarget.closest(".drop-target");
+                if (!finalTarget.classList.contains("filled")) {
+                    verifyAnswer(element, finalTarget);
+                    return;
+                }
+            }
+        }
+
+        function moveElementAt(pageX, pageY) {
+            if (!activeTouchElement) return;
+            activeTouchElement.style.left = `${pageX - activeTouchElement.offsetWidth / 2}px`;
+            activeTouchElement.style.top = `${pageY - activeTouchElement.offsetHeight / 2}px`;
+        }
+
+        // 啟動首關關卡
+        window.onload = initGame;
+    </script>
+</body>
+</html>
