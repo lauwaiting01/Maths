@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1-20 順數倒數與階梯動畫示範</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #f7f9fa;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+        /* 1. 上方小熊頭區域 (15% 高度) */
+        #bear-container {
+            width: 100%;
+            height: 15vh;
+            padding: 10px 30px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-gap: 10px;
+            justify-items: center;
+            align-items: center;
+        }
+        .bear-wrapper {
+            width: 45px;
+            height: 45px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .bear-wrapper.show {
+            opacity: 1;
+        }
+        /* 2. 中央數字區域 (55% 高度) */
+        #number-container {
+            height: 55vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #counter-text {
+            font-weight: bold;
+            color: #333;
+            line-height: 1;
+            display: none;
+            user-select: none;
+            z-index: 2;
+        }
+        /* 3. 下方樓梯區域 (30% 高度) */
+        #stairs-container {
+            width: 90%;
+            height: 25vh;
+            display: flex;
+            align-items: flex-end; /* 靠底部對齊 */
+            justify-content: space-between;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #bdc3c7;
+        }
+        .stair-step {
+            flex: 1;
+            background-color: #db7093; /* 預設台階顏色 */
+            border-radius: 4px 4px 0 0;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: scaleY(0);
+            transform-origin: bottom;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stair-step.show {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+        .stair-label {
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            align-self: flex-end;
+        }
+
+        /* 控制按鈕群組 */
+        #btn-group {
+            display: flex;
+            gap: 20px;
+            position: absolute;
+            z-index: 10;
+        }
+        .start-btn {
+            padding: 20px 40px;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        #up-btn {
+            background-color: #ff6b6b;
+            box-shadow: 0 8px 15px rgba(255, 107, 107, 0.3);
+        }
+        #up-btn:hover { background-color: #ff5252; transform: scale(1.05); }
+        #down-btn {
+            background-color: #3498db;
+            box-shadow: 0 8px 15px rgba(52, 152, 219, 0.3);
+        }
+        #down-btn:hover { background-color: #2980b9; transform: scale(1.05); }
+        .start-btn:active { transform: scale(0.98); }
+        
+        #replay-btn {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 上方小熊頭區域 -->
+    <div id="bear-container"></div>
+
+    <!-- 中央數字與按鈕區域 -->
+    <div id="number-container">
+        <div id="btn-group">
+            <button id="up-btn" class="start-btn" onclick="startAnimation('up')">順數開始</button>
+            <button id="down-btn" class="start-btn" onclick="startAnimation('down')">倒數開始</button>
+        </div>
+        <div id="counter-text">1</div>
+    </div>
+
+    <!-- 下方樓梯區域 -->
+    <div id="stairs-container"></div>
+
+    <button id="replay-btn" onclick="resetAnimation()">回主選單</button>
+
+    <script>
+        const total = 20;
+        const intervalTime = 1500; // 1.5 秒一跳
+        const bearContainer = document.getElementById('bear-container');
+        const stairsContainer = document.getElementById('stairs-container');
+        const counterText = document.getElementById('counter-text');
+        const btnGroup = document.getElementById('btn-group');
+        const replayBtn = document.getElementById('replay-btn');
+        
+        let currentNum = 1;
+        let animationTimer = null;
+
+        // 10種柔和的彩虹階梯顏色循環
+        const stairColors = ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe', '#fd79a8', '#fab1a0', '#00cec9', '#ffeaa7', '#fdcb6e'];
+
+        // 矢量小熊頭圖形
+        const bearSVG = `
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+                <circle cx="25" cy="25" r="18" fill="#e67e22" />
+                <circle cx="25" cy="25" r="10" fill="#f39c12" />
+                <circle cx="75" cy="25" r="18" fill="#e67e22" />
+                <circle cx="75" cy="25" r="10" fill="#f39c12" />
+                <circle cx="50" cy="55" r="38" fill="#e67e22" />
+                <circle cx="38" cy="48" r="5" fill="#2c3e50" />
+                <circle cx="62" cy="48" r="5" fill="#2c3e50" />
+                <ellipse cx="50" cy="65" rx="14" ry="10" fill="#f39c12" />
+                <circle cx="50" cy="61" r="5" fill="#2c3e50" />
+            </svg>
+        `;
+
+        // 初始化：生成 20 個小熊頭格子與 20 階樓梯
+        for (let i = 0; i < total; i++) {
+            // 生成小熊
+            const bWrapper = document.createElement('div');
+            bWrapper.className = 'bear-wrapper';
+            bWrapper.id = `bear-${i + 1}`;
+            bWrapper.innerHTML = bearSVG;
+            bearContainer.appendChild(bWrapper);
+
+            // 生成樓梯台階 (高度隨 i 等比例增加，從 5% 到 100%)
+            const step = document.createElement('div');
+            step.className = 'stair-step';
+            step.id = `stair-${i + 1}`;
+            const stepHeight = ((i + 1) / total) * 100;
+            step.style.height = `${stepHeight}%`;
+            step.style.backgroundColor = stairColors[i % stairColors.length];
+            
+            // 台階內的小數字標籤
+            const label = document.createElement('span');
+            label.className = 'stair-label';
+            label.innerText = i + 1;
+            step.appendChild(label);
+            
+            stairsContainer.appendChild(step);
+        }
+
+        // 精確計算字體大小：1 為 6vh (偏小)，20 為 80vh (佔屏幕高度 80%)
+        function updateNumberDisplay(num) {
+            counterText.innerText = num;
+            const startSize = 6; 
+            const endSize = 80;
+            const currentSize = startSize + ((endSize - startSize) * (num - 1) / (total - 1));
+            // 由於下方放了樓梯，將高度限制縮放到 55vh 的 80% 左右避免重疊
+            counterText.style.fontSize = `${currentSize * 0.7}vh`;
+        }
+
+        // 執行起動動畫邏輯
+        function startAnimation(mode) {
+            btnGroup.style.display = 'none';
+            counterText.style.display = 'block';
+            
+            if (mode === 'up') {
+                currentNum = 1;
+                updateNumberDisplay(currentNum);
+                document.getElementById(`bear-${currentNum}`).classList.add('show');
+                document.getElementById(`stair-${currentNum}`).classList.add('show');
+
+                animationTimer = setInterval(() => {
+                    currentNum++;
+                    if (currentNum <= total) {
+                        updateNumberDisplay(currentNum);
+                        document.getElementById(`bear-${currentNum}`).classList.add('show');
+                        document.getElementById(`stair-${currentNum}`).classList.add('show');
+                    } else {
+                        clearInterval(animationTimer);
+                        replayBtn.style.display = 'block';
+                    }
+                }, intervalTime);
+                
+            } else if (mode === 'down') {
+                currentNum = 20;
+                updateNumberDisplay(currentNum);
+                // 倒數開始時，小熊和樓梯全部蓋滿
+                for (let i = 1; i <= total; i++) {
+                    document.getElementById(`bear-${i}`).classList.add('show');
+                    document.getElementById(`stair-${i}`).classList.add('show');
+                }
+
+                animationTimer = setInterval(() => {
+                    // 目前數字的小熊與階梯移除
+                    document.getElementById(`bear-${currentNum}`).classList.remove('show');
+                    document.getElementById(`stair-${currentNum}`).classList.remove('show');
+                    currentNum--;
+                    if (currentNum >= 1) {
+                        updateNumberDisplay(currentNum);
+                    } else {
+                        clearInterval(animationTimer);
+                        replayBtn.style.display = 'block';
+                    }
+                }, intervalTime);
+            }
+        }
+
+        // 重置回到最初狀態
+        function resetAnimation() {
+            clearInterval(animationTimer);
+            replayBtn.style.display = 'none';
+            for (let i = 1; i <= total; i++) {
+                document.getElementById(`bear-${i}`).classList.remove('show');
+                document.getElementById(`stair-${i}`).classList.remove('show');
+            }
+            counterText.style.display = 'none';
+            btnGroup.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
