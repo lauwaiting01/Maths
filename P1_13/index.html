@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>加法交換律大冒險 🎈</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for winning effect -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #FFF9E6 0%, #E8F5E9 50%, #E1F5FE 100%);
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+
+        .font-cute {
+            font-family: 'Zen Maru Gothic', 'Fredoka', cursive, sans-serif;
+        }
+
+        /* 3D Cute Button Style */
+        .btn-cute {
+            transition: all 0.15s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15), 0 10px 15px rgba(0,0,0,0.1);
+        }
+        .btn-cute:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 rgba(0,0,0,0.15), 0 5px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Number Card Style */
+        .card-num {
+            background: linear-gradient(145deg, #FF9A9E, #FECFEF);
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 0 #F472B6, 0 8px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: grab;
+        }
+        .card-num:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .card-num-2 {
+            background: linear-gradient(145deg, #a1c4fd, #c2e9fb);
+            box-shadow: 0 6px 0 #60A5FA, 0 8px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Drop Zones */
+        .drop-box {
+            border: 4px dashed #CBD5E1;
+            background-color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+        .drop-box.hovered {
+            border-color: #4ADE80;
+            background-color: #DCFCE7;
+            transform: scale(1.05);
+        }
+        .drop-box.filled {
+            border-style: solid;
+            border-color: #60A5FA;
+            background-color: #EFF6FF;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .drop-box.active-sum {
+            border-style: solid;
+            border-color: #F59E0B;
+            background-color: #FEF3C7;
+            animation: pulse 1.5s infinite;
+            cursor: pointer;
+        }
+
+        /* Keypad Styles */
+        .key-btn {
+            background: white;
+            color: #334155;
+            box-shadow: 0 4px 0 #CBD5E1, 0 6px 8px rgba(0,0,0,0.05);
+            border: 2px solid #E2E8F0;
+            transition: all 0.1s ease;
+        }
+        .key-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #CBD5E1, 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+        @keyframes bounceSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .animate-bounce-slow {
+            animation: bounceSlow 2s infinite;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between p-2 md:p-4 font-cute max-w-5xl mx-auto">
+
+    <!-- ==================== 頂部資訊與進度條 ==================== -->
+    <header class="w-full flex flex-col gap-2 bg-white/80 backdrop-blur-md rounded-3xl p-3 shadow-lg border-4 border-yellow-200">
+        <div class="flex justify-between items-center">
+            <!-- 標題與吉祥物 -->
+            <div class="flex items-center gap-2">
+                <span class="text-3xl md:text-4xl animate-bounce-slow">🐻</span>
+                <h1 class="text-xl md:text-2xl font-black text-amber-500 tracking-wide">加法交換律大冒險</h1>
+            </div>
+
+            <!-- 星星與得分 -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 bg-amber-100 px-3 py-1.5 rounded-full border-2 border-amber-300">
+                    <i class="fa-solid fa-star text-amber-400 text-xl md:text-2xl"></i>
+                    <span id="score-text" class="text-xl md:text-2xl font-black text-amber-700">0</span>
+                </div>
+                <button onclick="nextQuestion()" class="btn-cute bg-sky-400 hover:bg-sky-500 text-white font-bold px-3 py-1.5 md:px-4 md:py-2 rounded-2xl flex items-center gap-1.5 text-base md:text-lg">
+                    <i class="fa-solid fa-forward"></i> 換一題
+                </button>
+            </div>
+        </div>
+
+        <!-- 進度條 -->
+        <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden p-0.5 border border-gray-300">
+            <div id="progress-bar" class="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-500" style="width: 10%"></div>
+        </div>
+    </header>
+
+
+    <!-- ==================== 上方 2/3：主要題目大看板 ==================== -->
+    <main class="w-full flex-1 flex flex-col items-center justify-center relative my-2">
+        <!-- 動物背景裝飾 -->
+        <div class="absolute top-2 left-4 text-3xl opacity-30 select-none">🐰</div>
+        <div class="absolute bottom-2 right-4 text-3xl opacity-30 select-none">🐱</div>
+
+        <div class="w-full h-full bg-white/90 rounded-3xl shadow-xl border-4 border-sky-200 p-4 flex flex-col items-center justify-center relative overflow-hidden">
+            
+            <!-- 提示引導標語 -->
+            <div class="bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full text-base md:text-xl font-bold mb-3 shadow-sm border border-amber-200 flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                <span id="instruction-tip">將下方數字拖入或點擊填入 [  ] + [  ] 中！</span>
+            </div>
+
+            <!-- 主題目區域 (大字看板) -->
+            <div class="flex flex-wrap items-center justify-center gap-2 md:gap-4 my-auto w-full">
+                <!-- 原始算式 (如 2 + 9) -->
+                <div class="flex items-center gap-2 bg-pink-50 px-3 py-2 md:px-5 md:py-3 rounded-2xl border-2 border-pink-200 shadow-inner">
+                    <span id="top-num1" class="text-4xl md:text-6xl font-black text-pink-500">2</span>
+                    <span class="text-3xl md:text-5xl font-black text-pink-400">+</span>
+                    <span id="top-num2" class="text-4xl md:text-6xl font-black text-purple-500">9</span>
+                </div>
+
+                <span class="text-3xl md:text-5xl font-black text-gray-400">=</span>
+
+                <!-- 交換律填空區 (同步顯示) -->
+                <div class="flex items-center gap-2 bg-blue-50 px-3 py-2 md:px-5 md:py-3 rounded-2xl border-2 border-blue-200 shadow-inner">
+                    <div id="top-box1" class="w-14 h-16 md:w-20 md:h-24 rounded-xl bg-white border-2 border-blue-300 flex items-center justify-center text-3xl md:text-5xl font-black text-blue-600 shadow-sm transition-all">?</div>
+                    <span class="text-3xl md:text-5xl font-black text-blue-400">+</span>
+                    <div id="top-box2" class="w-14 h-16 md:w-20 md:h-24 rounded-xl bg-white border-2 border-blue-300 flex items-center justify-center text-3xl md:text-5xl font-black text-purple-600 shadow-sm transition-all">?</div>
+                </div>
+
+                <span class="text-3xl md:text-5xl font-black text-gray-400">=</span>
+
+                <!-- 最終總和框 (同步顯示) -->
+                <div id="top-box-sum" class="w-16 h-16 md:w-24 md:h-24 rounded-2xl bg-amber-50 border-4 border-amber-300 flex items-center justify-center text-3xl md:text-5xl font-black text-amber-600 shadow-sm transition-all">
+                    ?
+                </div>
+            </div>
+
+            <!-- 反饋訊息提示 (答對/答錯) -->
+            <div id="feedback-msg" class="h-8 text-center text-lg md:text-2xl font-black mt-1 transition-all"></div>
+        </div>
+    </main>
+
+
+    <!-- ==================== 下方 1/3：學生專屬操作區 ==================== -->
+    <footer class="w-full bg-emerald-500/10 rounded-3xl p-3 md:p-4 border-4 border-emerald-300 backdrop-blur-md shadow-2xl flex flex-col justify-center gap-2">
+        
+        <!-- 操作步驟指示 -->
+        <div class="flex justify-between items-center text-xs md:text-sm font-bold text-emerald-800 px-2">
+            <span>👇 學生操作區（完整算式與數字鍵盤）：</span>
+            <button onclick="resetCurrentQuestion()" class="text-emerald-700 underline hover:text-emerald-900">重載本題</button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row items-center justify-around gap-3">
+            
+            <!-- 1. 可拖曳數字卡片與完整算式 [ 2 + 9 = _ + _ = _ ] -->
+            <div class="flex flex-wrap items-center justify-center gap-2 bg-white/80 p-2.5 rounded-2xl border-2 border-emerald-200 shadow-sm w-full lg:w-auto">
+                <!-- 題目卡片 A + B -->
+                <div id="card-a" draggable="true" onclick="autoFillCard(this)" class="card-num w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-white select-none">
+                    2
+                </div>
+                <span class="text-xl md:text-3xl font-black text-emerald-600">+</span>
+                <div id="card-b" draggable="true" onclick="autoFillCard(this)" class="card-num card-num-2 w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-white select-none">
+                    9
+                </div>
+
+                <span class="text-xl md:text-3xl font-black text-emerald-600">=</span>
+
+                <!-- 下方交換律放置框 [ ] + [ ] -->
+                <div id="drop-1" data-slot="1" class="drop-box w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-blue-600">
+                </div>
+                <span class="text-xl md:text-3xl font-black text-emerald-600">+</span>
+                <div id="drop-2" data-slot="2" class="drop-box w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-purple-600">
+                </div>
+
+                <span class="text-xl md:text-3xl font-black text-emerald-600">=</span>
+                
+                <!-- 下方總和按鈕框 -->
+                <div id="drop-sum" onclick="focusSumInput()" class="drop-box w-14 h-14 md:w-18 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-amber-600 cursor-pointer">
+                    <i class="fa-solid fa-lock text-lg text-gray-300" id="lock-icon"></i>
+                </div>
+            </div>
+
+            <!-- 2. 直接內嵌在下方操作區的數字鍵盤 (0-9, 清除, 確定) -->
+            <div class="flex items-center gap-1 bg-white/90 p-2 rounded-2xl border-2 border-amber-300 shadow-md w-full lg:w-auto justify-center">
+                <div class="grid grid-cols-6 sm:grid-cols-12 gap-1 w-full">
+                    <button onclick="pressKey('1')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">1</button>
+                    <button onclick="pressKey('2')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">2</button>
+                    <button onclick="pressKey('3')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">3</button>
+                    <button onclick="pressKey('4')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">4</button>
+                    <button onclick="pressKey('5')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">5</button>
+                    <button onclick="pressKey('6')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">6</button>
+                    <button onclick="pressKey('7')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">7</button>
+                    <button onclick="pressKey('8')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">8</button>
+                    <button onclick="pressKey('9')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">9</button>
+                    <button onclick="pressKey('0')" class="key-btn h-10 sm:h-12 rounded-xl text-lg sm:text-xl font-black">0</button>
+                    <button onclick="pressKey('clear')" class="key-btn h-10 sm:h-12 rounded-xl text-xs sm:text-sm font-bold text-red-500 bg-red-50">清除</button>
+                    <button onclick="submitAnswer()" class="btn-cute h-10 sm:h-12 rounded-xl text-xs sm:text-sm font-black bg-emerald-400 hover:bg-emerald-500 text-white border-none">確定</button>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- JS 邏輯 -->
+    <script>
+        // ------------------ 遊戲狀態與變數 ------------------
+        let numA = 2;
+        let numB = 9;
+        let correctSum = 11;
+        
+        let currentSlot1 = null;
+        let currentSlot2 = null;
+        let userSum = "";
+        
+        let score = 0;
+        let questionCount = 1;
+        const totalQuestions = 10;
+        let draggedValue = null;
+
+        // 音效組件 (Web Audio API)
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'key') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.setValueAtTime(150, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        // ------------------ 初始化與生成題目 ------------------
+        window.onload = function() {
+            generateQuestion();
+            setupDragAndDrop();
+        };
+
+        function generateQuestion() {
+            // 一年級合適數字範圍 (和 <= 18)
+            numA = Math.floor(Math.random() * 8) + 2; // 2~9
+            numB = Math.floor(Math.random() * 8) + 2; // 2~9
+            correctSum = numA + numB;
+
+            // 重置狀態
+            currentSlot1 = null;
+            currentSlot2 = null;
+            userSum = "";
+
+            // 更新 DOM - 上方題目
+            document.getElementById('top-num1').innerText = numA;
+            document.getElementById('top-num2').innerText = numB;
+            document.getElementById('top-box1').innerText = "?";
+            document.getElementById('top-box2').innerText = "?";
+            document.getElementById('top-box-sum').innerText = "?";
+            document.getElementById('top-box-sum').className = "w-16 h-16 md:w-24 md:h-24 rounded-2xl bg-amber-50 border-4 border-amber-300 flex items-center justify-center text-3xl md:text-5xl font-black text-amber-600 shadow-sm transition-all";
+
+            // 更新 DOM - 下方操作卡片
+            const cardA = document.getElementById('card-a');
+            const cardB = document.getElementById('card-b');
+            cardA.innerText = numA;
+            cardB.innerText = numB;
+            cardA.style.visibility = 'visible';
+            cardB.style.visibility = 'visible';
+
+            // 重置 Drop 框
+            const d1 = document.getElementById('drop-1');
+            const d2 = document.getElementById('drop-2');
+            d1.innerText = "";
+            d2.innerText = "";
+            d1.className = "drop-box w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-blue-600";
+            d2.className = "drop-box w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-purple-600";
+
+            const dSum = document.getElementById('drop-sum');
+            dSum.innerHTML = '<i class="fa-solid fa-lock text-lg text-gray-300" id="lock-icon"></i>';
+            dSum.className = "drop-box w-14 h-14 md:w-18 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-amber-600 cursor-pointer";
+
+            // 反饋訊息與提示
+            document.getElementById('feedback-msg').innerText = "";
+            document.getElementById('instruction-tip').innerText = "將下方數字拖入或點擊填入 [  ] + [  ] 中！";
+
+            // 更新進度條
+            const percent = (questionCount / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        // ------------------ 點擊自動填入 (適應幼兒/觸控) ------------------
+        function autoFillCard(cardEl) {
+            playSound('pop');
+            const val = parseInt(cardEl.innerText);
+
+            if (currentSlot1 === null) {
+                fillSlot(1, val);
+                // 不隱藏原本卡片
+            } else if (currentSlot2 === null) {
+                fillSlot(2, val);
+                // 不隱藏原本卡片
+            }
+        }
+
+        function fillSlot(slotNum, value) {
+            if (slotNum === 1) {
+                currentSlot1 = value;
+                const d1 = document.getElementById('drop-1');
+                d1.innerText = value;
+                d1.classList.add('filled');
+                document.getElementById('top-box1').innerText = value;
+            } else if (slotNum === 2) {
+                currentSlot2 = value;
+                const d2 = document.getElementById('drop-2');
+                d2.innerText = value;
+                d2.classList.add('filled');
+                document.getElementById('top-box2').innerText = value;
+            }
+            checkExchangeComplete();
+        }
+
+        // ------------------ 拖曳邏輯 (Drag & Drop) ------------------
+        function setupDragAndDrop() {
+            const cards = [document.getElementById('card-a'), document.getElementById('card-b')];
+            const dropZones = [document.getElementById('drop-1'), document.getElementById('drop-2')];
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    initAudio();
+                    draggedValue = parseInt(card.innerText);
+                    e.dataTransfer.setData('text/plain', card.innerText);
+                    card.classList.add('opacity-50');
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('opacity-50');
+                });
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('hovered');
+                });
+
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('hovered');
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('hovered');
+                    const slotNum = parseInt(zone.getAttribute('data-slot'));
+
+                    if (slotNum === 1 && currentSlot1 === null) {
+                        fillSlot(1, draggedValue);
+                        playSound('pop');
+                    } else if (slotNum === 2 && currentSlot2 === null) {
+                        fillSlot(2, draggedValue);
+                        playSound('pop');
+                    }
+                });
+            });
+        }
+
+        // 移除原有的 hideCardByValue 函數
+
+        function hideCardByValue(val) {
+            const cardA = document.getElementById('card-a');
+            const cardB = document.getElementById('card-b');
+            if (cardA.style.visibility !== 'hidden' && parseInt(cardA.innerText) === val) {
+                cardA.style.visibility = 'hidden';
+            } else if (cardB.style.visibility !== 'hidden' && parseInt(cardB.innerText) === val) {
+                cardB.style.visibility = 'hidden';
+            }
+        }
+
+        function checkExchangeComplete() {
+            if (currentSlot1 !== null && currentSlot2 !== null) {
+                const dropSum = document.getElementById('drop-sum');
+                dropSum.classList.remove('cursor-not-allowed');
+                dropSum.classList.add('active-sum');
+                if (userSum === "") {
+                    dropSum.innerHTML = '<span class="animate-bounce">❓</span>';
+                }
+                
+                document.getElementById('instruction-tip').innerText = "太棒了！點擊下方數字鍵盤輸入總和答案，再按確定！";
+            }
+        }
+
+        function focusSumInput() {
+            initAudio();
+            if (currentSlot1 === null || currentSlot2 === null) {
+                playSound('error');
+                document.getElementById('feedback-msg').innerText = "請先將前方的兩個數字填好喔！";
+                document.getElementById('feedback-msg').className = "h-8 text-center text-lg md:text-2xl font-black mt-1 text-amber-500 animate-bounce";
+            }
+        }
+
+        function pressKey(key) {
+            initAudio();
+            if (currentSlot1 === null || currentSlot2 === null) {
+                playSound('error');
+                document.getElementById('feedback-msg').innerText = "請先將前方的兩個數字填好喔！";
+                document.getElementById('feedback-msg').className = "h-8 text-center text-lg md:text-2xl font-black mt-1 text-amber-500 animate-bounce";
+                return;
+            }
+
+            playSound('key');
+            if (key === 'clear') {
+                userSum = "";
+            } else {
+                if (userSum.length < 2) {
+                    userSum += key;
+                }
+            }
+            
+            // 同步顯示於上方與下方的總和框
+            if (userSum !== "") {
+                document.getElementById('top-box-sum').innerText = userSum;
+                document.getElementById('drop-sum').innerText = userSum;
+            } else {
+                document.getElementById('top-box-sum').innerText = "?";
+                document.getElementById('drop-sum').innerHTML = '<span class="animate-bounce">❓</span>';
+            }
+        }
+
+        function submitAnswer() {
+            initAudio();
+            if (currentSlot1 === null || currentSlot2 === null) {
+                playSound('error');
+                document.getElementById('feedback-msg').innerText = "請先拖放完成交換律數字！";
+                document.getElementById('feedback-msg').className = "h-8 text-center text-lg md:text-2xl font-black mt-1 text-amber-500 animate-bounce";
+                return;
+            }
+            if (userSum === "") {
+                playSound('error');
+                document.getElementById('feedback-msg').innerText = "請輸入總和答案！";
+                document.getElementById('feedback-msg').className = "h-8 text-center text-lg md:text-2xl font-black mt-1 text-amber-500 animate-bounce";
+                return;
+            }
+
+            const answer = parseInt(userSum);
+
+            // 驗證加法交換律與總和正確性
+            // 如果兩個數字相同(如 4+4)，填入 4+4 即可；如果數字不同(如 2+9)，則必須位置對調(9+2)
+            const isSameNumbers = (numA === numB);
+            const isExchangeValid = isSameNumbers 
+                ? (currentSlot1 === numA && currentSlot2 === numB)
+                : (currentSlot1 === numB && currentSlot2 === numA);
+            const isSumCorrect = (answer === correctSum);
+
+            if (isExchangeValid && isSumCorrect) {
+                handleCorrect();
+            } else {
+                handleWrong(isSumCorrect, isExchangeValid);
+            }
+        }
+
+        // ------------------ 正確與錯誤反饋 ------------------
+        function handleCorrect() {
+            playSound('success');
+            score += 10;
+            document.getElementById('score-text').innerText = score;
+
+            // 特效：彩色紙屑
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            const feedback = document.getElementById('feedback-msg');
+            feedback.innerText = `🎉 太棒了！ ${numA} + ${numB} = ${currentSlot1} + ${currentSlot2} = ${correctSum} ！`;
+            feedback.className = "h-8 text-center text-xl md:text-3xl font-black mt-1 text-emerald-500 animate-bounce";
+
+            document.getElementById('top-box-sum').classList.add('bg-emerald-100', 'border-emerald-400', 'text-emerald-600');
+
+            setTimeout(() => {
+                nextQuestion();
+            }, 2300);
+        }
+
+        function handleWrong(isSumCorrect, isExchangeValid) {
+            playSound('error');
+            const feedback = document.getElementById('feedback-msg');
+            
+            if (!isExchangeValid && (currentSlot1 === numA && currentSlot2 === numB)) {
+                feedback.innerText = "記得要把兩個數字交換位置喔！💡";
+            } else if (!isSumCorrect) {
+                feedback.innerText = "總和算錯了唷，再試試看！💪";
+            } else {
+                feedback.innerText = "數字填寫不對喔，再試一次！💡";
+            }
+            feedback.className = "h-8 text-center text-lg md:text-2xl font-black mt-1 text-rose-500";
+
+            const container = document.querySelector('main');
+            container.classList.add('animate-pulse');
+            setTimeout(() => container.classList.remove('animate-pulse'), 500);
+        }
+
+        function resetCurrentQuestion() {
+            currentSlot1 = null;
+            currentSlot2 = null;
+            userSum = "";
+
+            document.getElementById('top-box1').innerText = "?";
+            document.getElementById('top-box2').innerText = "?";
+            document.getElementById('top-box-sum').innerText = "?";
+
+            document.getElementById('card-a').style.visibility = 'visible';
+            document.getElementById('card-b').style.visibility = 'visible';
+
+            const d1 = document.getElementById('drop-1');
+            const d2 = document.getElementById('drop-2');
+            d1.innerText = "";
+            d2.innerText = "";
+            d1.className = "drop-box w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-blue-600";
+            d2.className = "drop-box w-12 h-14 md:w-16 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-purple-600";
+
+            const dSum = document.getElementById('drop-sum');
+            dSum.innerHTML = '<i class="fa-solid fa-lock text-lg text-gray-300" id="lock-icon"></i>';
+            dSum.className = "drop-box w-14 h-14 md:w-18 md:h-18 rounded-xl flex items-center justify-center text-2xl md:text-4xl font-black text-amber-600 cursor-pointer";
+
+            document.getElementById('feedback-msg').innerText = "";
+        }
+
+        function nextQuestion() {
+            questionCount++;
+            if (questionCount > totalQuestions) {
+                questionCount = 1;
+            }
+            generateQuestion();
+        }
+    </script>
+</body>
+</html>
