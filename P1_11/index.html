@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數字範圍拖拉挑戰（底部緊貼版）</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; 
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 頂部極大留白區 */
+        .top-empty-space {
+            height: 40vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f2f5;
+        }
+
+        .top-empty-space h1 {
+            margin: 0;
+            color: #1e88e5;
+            font-size: 1.8rem;
+            opacity: 0.8;
+        }
+
+        /* 整個活動區：完全固定在螢幕下半方 (60vh) */
+        .bottom-activity-box {
+            height: 60vh;
+            background: #ffffff;
+            border-top: 4px solid #1e88e5;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* 控制列 */
+        .control-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #0d47a1;
+        }
+
+        select {
+            padding: 4px 8px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            border: 2px solid #1e88e5;
+            background: white;
+            cursor: pointer;
+        }
+
+        .start-btn {
+            padding: 5px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover { background-color: #45a049; transform: scale(1.03); }
+
+        /* 遊戲互動主體區（左提示、右遊戲） */
+        .game-body {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            position: relative;
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .game-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 左側大提示牌 */
+        .hint-badge {
+            width: 22%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            padding: 5px;
+            box-sizing: border-box;
+            background-color: #eee;
+            color: #999;
+        }
+
+        .hint-forward { background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%); color: white; }
+        .hint-backward { background: linear-gradient(180deg, #ff5722 0%, #d84315 100%); color: white; }
+
+        .hint-badge .arrow {
+            font-size: 3.5rem;
+            margin-top: 5px;
+            animation: pulse 1s infinite alternate;
+        }
+
+        /* 右側遊戲內容 */
+        .game-right {
+            width: 78%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .slots-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-content: center;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px dashed #ccc;
+            min-height: 70px;
+        }
+
+        .slot {
+            width: 50px;
+            height: 50px;
+            background: #ebebeb;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .slot.empty-target { background: #fff9c4; border: 2px dashed #fbc02d; color: #f57f17; }
+        .slot.filled { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; border-style: solid; animation: pop 0.3s ease; }
+
+        .cards-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 70px;
+            padding: 8px;
+            background: #fffde7;
+            border-radius: 10px;
+            border: 2px solid #fff59d;
+        }
+
+        .number-card {
+            width: 52px;
+            height: 52px;
+            background: #ffeb3b;
+            border: 2px solid #fbc02d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            touch-action: none;
+        }
+
+        .number-card:active { cursor: grabbing; }
+        .number-card.dragging { opacity: 0.4; }
+
+        .win-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #4caf50;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+    </style>
+</head>
+<body>
+
+    <div class="top-empty-space">
+        <h1>✨ 1-20 數字排排隊 ✨</h1>
+    </div>
+
+    <!-- 整個活動區完全固定在下半方 -->
+    <div class="bottom-activity-box">
+        <div class="control-bar">
+            <span>範圍：從</span>
+            <select id="startNum" onchange="updateEndOptions()"></select>
+            <span>到</span>
+            <select id="endNum"></select>
+            <button class="start-btn" onclick="startGame()">開始</button>
+        </div>
+
+        <div id="gameBody" class="game-body">
+            <div id="hintBadge" class="hint-badge">
+                <span id="hintText">準備</span>
+                <span id="hintArrow" class="arrow">❓</span>
+            </div>
+            <div class="game-right">
+                <div id="slotsArea" class="slots-area"></div>
+                <div id="cardsArea" class="cards-area"></div>
+            </div>
+        </div>
+
+        <div id="winOverlay" class="win-overlay">
+            🎉 太棒了！完美通關！ 🥳
+        </div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'correct') {
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'win') {
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.6);
+            }
+        }
+
+        const startSelect = document.getElementById('startNum');
+        const endSelect = document.getElementById('endNum');
+        for (let i = 1; i <= 20; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.textContent = i;
+            startSelect.appendChild(opt);
+        }
+        function updateEndOptions() {
+            const startVal = parseInt(startSelect.value);
+            endSelect.innerHTML = '';
+            for (let i = startVal + 1; i <= 20; i++) {
+                let opt = document.createElement('option');
+                opt.value = i; opt.textContent = i;
+                endSelect.appendChild(opt);
+            }
+            if (endSelect.lastChild) endSelect.lastChild.selected = true;
+        }
+        startSelect.value = 1;
+        updateEndOptions();
+
+        let isForwardMode = true;
+        let currentAnswersFilled = 0;
+        let totalSlotsToFill = 0;
+
+        function startGame() {
+            const minNum = parseInt(startSelect.value);
+            const maxNum = parseInt(endSelect.value);
+            if (isNaN(maxNum)) return;
+
+            document.getElementById('winOverlay').style.display = 'none';
+            document.getElementById('gameBody').classList.add('game-active');
+            currentAnswersFilled = 0;
+
+            isForwardMode = Math.random() > 0.5;
+            const hintBadge = document.getElementById('hintBadge');
+            const hintText = document.getElementById('hintText');
+            const hintArrow = document.getElementById('hintArrow');
+            if (isForwardMode) {
+                hintBadge.className = "hint-badge hint-forward";
+                hintText.textContent = "順數"; hintArrow.textContent = "➡️";
+            } else {
+                hintBadge.className = "hint-badge hint-backward";
+                hintText.textContent = "倒數"; hintArrow.textContent = "⬅️";
+            }
+
+            let sequence = [];
+            for (let i = minNum; i <= maxNum; i++) sequence.push(i);
+            if (!isForwardMode) sequence.reverse();
+
+            const rangeLength = sequence.length;
+            const randomPick = Math.floor(Math.random() * (8 - 3 + 1)) + 3;
+            totalSlotsToFill = Math.min(randomPick, rangeLength);
+
+            let blankIndices = [];
+            while (blankIndices.length < totalSlotsToFill) {
+                let randIdx = Math.floor(Math.random() * rangeLength);
+                if (!blankIndices.includes(randIdx)) blankIndices.push(randIdx);
+            }
+
+            const slotsArea = document.getElementById('slotsArea');
+            slotsArea.innerHTML = '';
+            let missingNumbers = [];
+
+            sequence.forEach((num, index) => {
+                const slot = document.createElement('div');
+                slot.classList.add('slot');
+                slot.dataset.correctValue = num;
+                if (blankIndices.includes(index)) {
+                    slot.textContent = '?';
+                    slot.classList.add('empty-target');
+                    missingNumbers.push(num);
+                    slot.addEventListener('dragover', e => e.preventDefault());
+                    slot.addEventListener('drop', dropCard);
+                } else {
+                    slot.textContent = num;
+                    slot.style.background = '#e0e0e0';
+                }
+                slotsArea.appendChild(slot);
+            });
+
+            missingNumbers.sort(() => Math.random() - 0.5);
+            const cardsArea = document.getElementById('cardsArea');
+            cardsArea.innerHTML = '';
+            missingNumbers.forEach(num => {
+                const card = document.createElement('div');
+                card.classList.add('number-card');
+                card.textContent = num;
+                card.draggable = true;
+                card.id = 'card-' + num;
+                card.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', e.target.textContent);
+                    e.dataTransfer.setData('sourceId', e.target.id);
+                    setTimeout(() => e.target.classList.add('dragging'), 0);
+                });
+                card.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+                card.addEventListener('touchstart', handleTouchStart, {passive: false});
+                card.addEventListener('touchmove', handleTouchMove, {passive: false});
+                card.addEventListener('touchend', handleTouchEnd);
+                cardsArea.appendChild(card);
+            });
+        }
+
+        function dropCard(e) {
+            e.preventDefault();
+            const slot = e.target.closest('.slot');
+            if (!slot || !slot.classList.contains('empty-target') || slot.classList.contains('filled')) return;
+            checkAnswer(e.dataTransfer.getData('text/plain'), slot, e.dataTransfer.getData('sourceId'));
+        }
+
+        let activeTouchCard = null;
+        function handleTouchStart(e) { activeTouchCard = e.target; activeTouchCard.classList.add('dragging'); }
+        function handleTouchMove(e) {
+            if (!activeTouchCard) return;
+            e.preventDefault();
+            const touch = e.touches;
+            activeTouchCard.style.position = 'fixed';
+            activeTouchCard.style.left = (touch.clientX - 25) + 'px';
+            activeTouchCard.style.top = (touch.clientY - 25) + 'px';
+            activeTouchCard.style.zIndex = '1000';
+        }
+        function handleTouchEnd(e) {
+            if (!activeTouchCard) return;
+            activeTouchCard.classList.remove('dragging');
+            activeTouchCard.style.position = ''; activeTouchCard.style.left = ''; activeTouchCard.style.top = ''; activeTouchCard.style.zIndex = '';
+            const touch = e.changedTouches;
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            const slot = el ? el.closest('.slot') : null;
+            if (slot && slot.classList.contains('empty-target') && !slot.classList.contains('filled')) {
+                checkAnswer(activeTouchCard.textContent, slot, activeTouchCard.id);
+            }
+            activeTouchCard = null;
+        }
+
+        function checkAnswer(value, slot, cardId) {
+            if (slot.dataset.correctValue === value) {
+                slot.textContent = value;
+                slot.classList.add('filled');
+                const card = document.getElementById(cardId);
+                if (card) card.remove();
+                currentAnswersFilled++;
+                playSound('correct');
+                if (currentAnswersFilled === totalSlotsToFill) {
+                    setTimeout(() => {
+                        document.getElementById('winOverlay').style.display = 'flex';
+                        playSound('win');
+                    }, 300);
+                }
+            } else {
+                slot.style.borderColor = '#f44336';
+                setTimeout(() => slot.style.borderColor = '#fbc02d', 500);
+            }
+        }
+    </script>
+</body>
+</html>
