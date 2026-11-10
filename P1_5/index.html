@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>10的分與合小遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #FFF0F5, #E6F2FF);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 上部 1/3: 數字牽手區 */
+        .top-section {
+            height: 30vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.6);
+            border-bottom: 4px dashed #FFB6C1;
+            box-sizing: border-box;
+            padding: 10px;
+            position: relative;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #FF69B4;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px #FFF;
+        }
+
+        .friends-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .friend-pair {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 2px solid #FFD700;
+            font-size: 20px;
+            font-weight: bold;
+            color: #555;
+            animation: float 3s ease-in-out infinite alternate;
+        }
+
+        .friend-pair:nth-child(even) {
+            animation-delay: 0.5s;
+        }
+
+        .handshake {
+            color: #FF69B4;
+            margin: 0 4px;
+            font-size: 18px;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-6px); }
+        }
+
+        /* 中部 1/3: 題目顯示區 */
+        .middle-section {
+            height: 36vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .number-bond {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 280px;
+        }
+
+        .box {
+            width: 85px;
+            height: 85px;
+            border-radius: 18px;
+            border: 4px solid #4A4A4A;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+            box-shadow: 0 6px 0px #4A4A4A;
+            color: #333;
+        }
+
+        .box.total {
+            background-color: #FFF;
+            border-color: #333;
+            z-index: 2;
+        }
+
+        .branches {
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        /* 用 SVG 畫簡單可愛的連接線 */
+        .bond-lines {
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 40px;
+            z-index: 1;
+        }
+
+        .bottom-boxes {
+            display: flex;
+            justify-content: space-between;
+            width: 240px;
+            margin-top: 25px;
+        }
+
+        .box.left-part {
+            border-color: #333;
+            background-color: #FFF;
+        }
+
+        .box.right-part {
+            border-color: #BDBDBD;
+            box-shadow: 0 6px 0px #BDBDBD;
+            background-color: #FAFAFA;
+            color: #FF69B4;
+        }
+
+        /* 下部 1/3: 學生點擊與操作區 */
+        .bottom-section {
+            height: 34vh;
+            background: rgba(255, 255, 255, 0.85);
+            border-top: 4px solid #98FB98;
+            box-sizing: border-box;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .options-title {
+            font-size: 22px;
+            color: #2E8B57;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .options-grid {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            max-width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .btn-option {
+            width: 65px;
+            height: 65px;
+            border-radius: 15px;
+            border: 3px solid #3CB371;
+            background-color: #F0FFF0;
+            font-size: 36px;
+            font-weight: bold;
+            color: #2E8B57;
+            cursor: pointer;
+            box-shadow: 0 5px 0px #3CB371;
+            transition: all 0.1s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        .btn-option:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0px #3CB371;
+        }
+
+        /* 答對與答錯特效 */
+        .flash-success {
+            animation: success-pulse 0.5s ease;
+        }
+        @keyframes success-pulse {
+            0% { background-color: white; }
+            50% { background-color: #98FB98; transform: scale(1.1); }
+            100% { background-color: white; }
+        }
+
+        /* 結算畫面 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .overlay-title {
+            font-size: 40px;
+            color: #FF69B4;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .btn-restart {
+            padding: 15px 40px;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            background-color: #FF69B4;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 6px 0px #C71585;
+            cursor: pointer;
+        }
+
+        .btn-restart:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #C71585;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 上部 1/3: 牽手好朋友提示區 -->
+    <div class="top-section">
+        <div class="title">✨ 10 的好朋友牽牽手 ✨</div>
+        <div class="friends-container">
+            <div class="friend-pair">1 <span class="handshake">🤝</span> 9</div>
+            <div class="friend-pair">2 <span class="handshake">🤝</span> 8</div>
+            <div class="friend-pair">3 <span class="handshake">🤝</span> 7</div>
+            <div class="friend-pair">4 <span class="handshake">🤝</span> 6</div>
+            <div class="friend-pair">5 <span class="handshake">🤝</span> 5</div>
+        </div>
+    </div>
+
+    <!-- 中部 1/3: 一題一題來的分與合題目 -->
+    <div class="middle-section">
+        <div class="number-bond">
+            <!-- 總數 10 -->
+            <div class="box total">10</div>
+            
+            <!-- 連接線 SVG -->
+            <svg class="bond-lines">
+                <line x1="100" y1="0" x2="30" y2="40" stroke="#4A4A4A" stroke-width="4" stroke-linecap="round"/>
+                <line x1="100" y1="0" x2="170" y2="40" stroke="#4A4A4A" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+
+            <!-- 下方組合（左邊已知，右邊未知） -->
+            <div class="bottom-boxes">
+                <div class="box left-part" id="left-number">1</div>
+                <div class="box right-part" id="right-number">?</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下部 1/3: 學生點擊區（集中在最下方） -->
+    <div class="bottom-section">
+        <div class="options-title">👉 請選出右邊的正確答案：</div>
+        <div class="options-grid" id="options-container">
+            <!-- 動態生成 1-9 的按鈕 -->
+        </div>
+    </div>
+
+    <!-- 遊戲完成結算畫面 -->
+    <div class="overlay" id="end-overlay">
+        <div class="overlay-title">🎉 太棒了！<br>你完成了所有 10 的組合！</div>
+        <button class="btn-restart" onclick="restartGame()">再玩一次 🔄</button>
+    </div>
+
+    <script>
+        // 1 到 9 的題目順序
+        let questions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let currentIndex = 0;
+
+        const leftNumEl = document.getElementById('left-number');
+        const rightNumEl = document.getElementById('right-number');
+        const optionsContainer = document.getElementById('options-container');
+        const endOverlay = document.getElementById('end-overlay');
+
+        // 初始化打亂題目順序，增加趣味性
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function initGame() {
+            currentIndex = 0;
+            shuffle(questions);
+            renderOptions();
+            showQuestion();
+            endOverlay.classList.remove('active');
+        }
+
+        // 渲染下部 1/3 的 1-9 數字按鈕
+        function renderOptions() {
+            optionsContainer.innerHTML = '';
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerText = i;
+                btn.onclick = () => checkAnswer(i);
+                optionsContainer.appendChild(btn);
+            }
+        }
+
+        // 顯示當前題目
+        function showQuestion() {
+            if (currentIndex >= questions.length) {
+                // 完成所有題目
+                endOverlay.classList.add('active');
+                return;
+            }
+            const leftVal = questions[currentIndex];
+            leftNumEl.innerText = leftVal;
+            rightNumEl.innerText = '?';
+            rightNumEl.style.color = '#BDBDBD';
+            rightNumEl.style.borderColor = '#BDBDBD';
+            rightNumEl.style.backgroundColor = '#FAFAFA';
+        }
+
+        // 檢查學生的答案
+        function checkAnswer(selectedNum) {
+            const leftVal = questions[currentIndex];
+            const correctAns = 10 - leftVal;
+
+            if (selectedNum === correctAns) {
+                // 答對了！顯示正確答案並變綠色閃爍
+                rightNumEl.innerText = correctAns;
+                rightNumEl.style.color = '#2E8B57';
+                rightNumEl.style.borderColor = '#3CB371';
+                rightNumEl.style.backgroundColor = '#FFF';
+                rightNumEl.classList.add('flash-success');
+
+                // 播放一個簡單的內建 Web Audio API 音效
+                playWinSound();
+
+                // 延遲 1.2 秒進入下一題，讓學生看清正確組合
+                setTimeout(() => {
+                    rightNumEl.classList.remove('flash-success');
+                    currentIndex++;
+                    showQuestion();
+                }, 1200);
+            } else {
+                // 答錯了，讓右邊格子抖動或變紅提示（這裡簡單做個顏色反饋）
+                rightNumEl.innerText = '❌';
+                playLoseSound();
+                setTimeout(() => {
+                    rightNumEl.innerText = '?';
+                }, 600);
+            }
+        }
+
+        // 可愛的小音效
+        function playWinSound() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+            osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.3);
+        }
+
+        function playLoseSound() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(220, ctx.currentTime); // A3
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.2);
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        // 啟動遊戲
+        window.onload = initGame;
+    </script>
+</body>
+</html>
