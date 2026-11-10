@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單數與雙數學習動畫</title>
+    <style>
+        :root {
+            --pink-color: #ff6b81;
+            --green-color: #2ed573;
+            --bg-color: #f7f1e3;
+            --cloud-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Quicksand', 'Bubbler One', "Chalkboard SE", "Microsoft JhengHei", sans-serif;
+            background: linear-gradient(135deg, #fff5f5 0%, #f0fcf4 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* 可愛的大標題 */
+        h1 {
+            color: #4b4b4b;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 頂部大數字雲朵區塊 */
+        .number-display-container {
+            background: var(--cloud-bg);
+            border-radius: 50px;
+            padding: 15px 40px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+            margin-bottom: 30px;
+            border: 4px solid #e0e0e0;
+            transition: all 0.4s ease;
+        }
+
+        /* 動態變色的超大數字 */
+        .big-number {
+            font-size: 5rem;
+            font-weight: bold;
+            line-height: 1;
+            transition: color 0.4s ease;
+        }
+
+        /* 單雙數文字提示 */
+        .type-badge {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-top: 5px;
+            padding: 4px 15px;
+            border-radius: 20px;
+            color: white;
+            transition: all 0.4s ease;
+        }
+
+        /* 狀態顏色類別 */
+        .state-empty {
+            color: #a0a0a0;
+        }
+        .state-empty .type-badge {
+            background-color: #a0a0a0;
+        }
+
+        .state-odd {
+            border-color: var(--pink-color);
+            box-shadow: 0 10px 25px rgba(255, 107, 129, 0.2);
+        }
+        .state-odd .big-number {
+            color: var(--pink-color);
+        }
+        .state-odd .type-badge {
+            background-color: var(--pink-color);
+            box-shadow: 0 4px 10px rgba(255, 107, 129, 0.3);
+        }
+
+        .state-even {
+            border-color: var(--green-color);
+            box-shadow: 0 10px 25px rgba(46, 213, 115, 0.2);
+        }
+        .state-even .big-number {
+            color: var(--green-color);
+        }
+        .state-even .type-badge {
+            background-color: var(--green-color);
+            box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
+        }
+
+        /* 遊戲主舞台：橫向排開 */
+        .stage {
+            display: flex;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 30px;
+            border: 3px dashed #d1ccc0;
+            max-width: 95vw;
+            overflow-x: auto;
+            min-height: 280px;
+            align-items: center;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.02);
+            scroll-behavior: smooth;
+        }
+
+        /* 自訂滾動條，維持可愛風格 */
+        .stage::-webkit-scrollbar {
+            height: 10px;
+        }
+        .stage::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        .stage::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* 每一組（一奇一偶）的垂直直欄 */
+        .pair-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 240px;
+            position: relative;
+            min-width: 80px;
+        }
+
+        /* 單個小朋友的座艙結構 */
+        .kid-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 90px;
+            position: relative;
+            opacity: 0;
+            transform: scale(0.6);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .kid-slot.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* 數字標籤通用樣式 */
+        .num-label {
+            font-size: 1.4rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        
+        /* 單數數字在上方 */
+        .odd-slot .num-label {
+            margin-bottom: 6px;
+            color: var(--pink-color);
+        }
+        
+        /* 雙數數字在下方 */
+        .even-slot .num-label {
+            margin-top: 6px;
+            color: var(--green-color);
+        }
+
+        /* 可愛的小朋友頭像氣泡 */
+        .face-bubble {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            border: 3px solid #f1f2f6;
+            transition: all 0.3s ease;
+        }
+
+        /* 溫和的同頻彈跳回饋（無閃爍） */
+        .bounce-active {
+            animation: gentleBounce 0.5s ease;
+        }
+
+        @keyframes gentleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* 寂寞左右微幅搖晃 */
+        .lonely-shake {
+            animation: gentleShake 2s infinite ease-in-out;
+        }
+
+        @keyframes gentleShake {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        /* 手牽手綠色連線 */
+        .hand-line {
+            position: absolute;
+            width: 6px;
+            background: linear-gradient(to bottom, var(--pink-color), var(--green-color));
+            top: 75px;
+            bottom: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            opacity: 0;
+            border-radius: 3px;
+            transition: opacity 0.3s ease;
+        }
+
+        .hand-line.connected {
+            opacity: 1;
+            background: var(--green-color);
+            box-shadow: 0 0 8px rgba(46, 213, 115, 0.4);
+        }
+
+        /* 底部胖嘟嘟按鈕控制區 */
+        .controls {
+            margin-top: 35px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-prev {
+            background-color: #ff9f43;
+        }
+        .btn-prev:hover { background-color: #ee5253; transform: translateY(-2px); }
+        .btn-prev:active { transform: translateY(1px); }
+
+        .btn-reset {
+            background-color: #a4b0be;
+        }
+        .btn-reset:hover { background-color: #747d8c; transform: translateY(-2px); }
+        .btn-reset:active { transform: translateY(1px); }
+
+        .btn-next {
+            background-color: #1dd1a1;
+            font-size: 1.4rem;
+            padding: 15px 45px;
+        }
+        .btn-next:hover { background-color: #10ac84; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(29, 209, 161, 0.3); }
+        .btn-next:active { transform: translateY(1px); }
+
+        .btn:disabled {
+            background-color: #c8d6e5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>👭 糖果色彩 ‧ 單數與雙數學習園地 👬</h1>
+
+    <!-- 頂部大數字與變色區塊 -->
+    <div id="numberDisplay" class="number-display-container state-empty">
+        <div id="bigNumberText" class="big-number">0</div>
+        <div id="typeBadgeText" class="type-badge">準備開始</div>
+    </div>
+
+    <!-- 遊戲主舞台 -->
+    <div class="stage" id="gameStage">
+        <!-- JS 動態生成 10 個 pair-column (共 20 個小朋友) -->
+    </div>
+
+    <!-- 底部控制按鈕 -->
+    <div class="controls">
+        <button class="btn btn-prev" id="btnPrev" onclick="changeStep(-1)" disabled>⬅ 上一個</button>
+        <button class="btn btn-reset" id="btnReset" onclick="resetGame()">🔄 重設</button>
+        <button class="btn btn-next" id="btnNext" onclick="changeStep(1)">下一個 ➡</button>
+    </div>
+
+    <script>
+        let currentCount = 0;
+        const maxCount = 20;
+        const stage = document.getElementById('gameStage');
+
+        // 初始化舞台結構
+        function initStage() {
+            stage.innerHTML = '';
+            for (let i = 1; i <= maxCount; i += 2) {
+                const oddNum = i;
+                const evenNum = i + 1;
+
+                const col = document.createElement('div');
+                col.className = 'pair-column';
+                col.id = `col-${oddNum}-${evenNum}`;
+
+                // 單數組（數字在上，臉在下）
+                const oddSlot = document.createElement('div');
+                oddSlot.className = 'kid-slot odd-slot';
+                oddSlot.id = `slot-${oddNum}`;
+                oddSlot.innerHTML = `
+                    <div class="num-label">${oddNum}</div>
+                    <div class="face-bubble" id="face-${oddNum}">😢</div>
+                `;
+
+                // 牽手線
+                const handLine = document.createElement('div');
+                handLine.className = 'hand-line';
+                handLine.id = `line-${oddNum}-${evenNum}`;
+
+                // 雙數組（臉在上，數字在下）
+                const evenSlot = document.createElement('div');
+                evenSlot.className = 'kid-slot even-slot';
+                evenSlot.id = `slot-${evenNum}`;
+                evenSlot.innerHTML = `
+                    <div class="face-bubble" id="face-${evenNum}">😄</div>
+                    <div class="num-label">${evenNum}</div>
+                `;
+
+                col.appendChild(oddSlot);
+                col.appendChild(handLine);
+                col.appendChild(evenSlot);
+                stage.appendChild(col);
+            }
+        }
+
+        // 更新畫面狀態
+        function updateUI() {
+            // 1. 更新頂部大數字雲朵與顏色切換
+            const display = document.getElementById('numberDisplay');
+            const bigText = document.getElementById('bigNumberText');
+            const badgeText = document.getElementById('typeBadgeText');
+
+            if (currentCount === 0) {
+                display.className = "number-display-container state-empty";
+                bigText.textContent = "0";
+                badgeText.textContent = "準備開始";
+            } else {
+                bigText.textContent = currentCount;
+                if (currentCount % 2 !== 0) {
+                    display.className = "number-display-container state-odd";
+                    badgeText.textContent = "單數 (孤單一個)";
+                } else {
+                    display.className = "number-display-container state-even";
+                    badgeText.textContent = "雙數 (好朋友好開心)";
+                }
+            }
+
+            // 2. 更新每個小朋友的狀態與表情
+            for (let i = 1; i <= maxCount; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                const face = document.getElementById(`face-${i}`);
+                
+                if (i <= currentCount) {
+                    slot.classList.add('show');
+                } else {
+                    slot.classList.remove('show');
+                }
+            }
+
+            // 3. 處理牽手與表情連動
+            for (let i = 1; i <= maxCount; i += 2) {
+                const oddNum = i;
+                const evenNum = i + 1;
+                const faceOdd = document.getElementById(`face-${oddNum}`);
+                const line = document.getElementById(`line-${oddNum}-${evenNum}`);
+
+                if (currentCount >= evenNum) {
+                    // 雙數已到：兩個人都變開心笑臉，連線亮起
+                    faceOdd.textContent = '😄';
+                    faceOdd.classList.remove('lonely-shake');
+                    line.classList.add('connected');
+                } else if (currentCount === oddNum) {
+                    // 剛好到單數：不開心，寂寞搖晃，無連線
+                    faceOdd.textContent = '😢';
+                    faceOdd.classList.add('lonely-shake');
+                    line.classList.remove('connected');
+                } else {
+                    // 還沒走到
+                    faceOdd.textContent = '😢';
+                    faceOdd.classList.remove('lonely-shake');
+                    line.classList.remove('connected');
+                }
+            }
+
+            // 4. 按鈕狀態控制
+            document.getElementById('btnPrev').disabled = (currentCount === 0);
+            document.getElementById('btnNext').disabled = (currentCount === maxCount);
+
+            // 5. 自動將視野滾動到當前出現的小朋友位置
+            if (currentCount > 0) {
+                const activeSlot = document.getElementById(`slot-${currentCount}`);
+                if (activeSlot) {
+                    activeSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }
+        }
+
+        // 步進控制（包含同頻柔和彈跳效果觸發）
+        function changeStep(dir) {
+            const nextCount = currentCount + dir;
+            if (nextCount < 0 || nextCount > maxCount) return;
+
+            currentCount = nextCount;
+            updateUI();
+
+            // 如果是前進到雙數，為這一組加上溫和的彈跳回饋（無閃爍）
+            if (dir > 0 && currentCount % 2 === 0) {
+                const oddF = document.getElementById(`face-${currentCount - 1}`);
+                const evenF = document.getElementById(`face-${currentCount}`);
+                
+                if (oddF && evenF) {
+                    oddF.classList.add('bounce-active');
+                    evenF.classList.add('bounce-active');
+                    
+                    // 動態結束後移除 class 以便下次觸發
+                    setTimeout(() => {
+                        oddF.classList.remove('bounce-active');
+                        evenF.classList.remove('bounce-active');
+                    }, 500);
+                }
+            }
+        }
+
+        // 重設遊戲
+        function resetGame() {
+            currentCount = 0;
+            updateUI();
+            stage.scrollLeft = 0;
+        }
+
+        // 鍵盤快捷鍵支援
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                changeStep(1);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                changeStep(-1);
+            }
+        });
+
+        // 初始化
+        initStage();
+        updateUI();
+    </script>
+</body>
+</html>
