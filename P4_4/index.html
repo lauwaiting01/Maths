@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可愛數學大冒險 Cute Math Quest</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Mina:wght@400;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pastel-pink': '#FFD1DC',
+                        'pastel-blue': '#AEC6CF',
+                        'pastel-yellow': '#FDFD96',
+                        'pastel-purple': '#C5A3FF',
+                        'pastel-green': '#B2FBA5',
+                        'pastel-orange': '#FFB347',
+                        'cute-dark': '#4A3E3D'
+                    },
+                    fontFamily: {
+                        'cute': ['"Fredoka One"', '"Noto Sans TC"', 'cursive', 'sans-serif'],
+                        'body': ['"Noto Sans TC"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka One', cursive, sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* Cute floating background elements animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        .animate-float-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .animate-float-fast {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Bounce effect for buttons */
+        .btn-bounce {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-bounce:hover {
+            transform: scale(1.05) translateY(-3px);
+        }
+        .btn-bounce:active {
+            transform: scale(0.95) translateY(2px);
+        }
+
+        /* Shake animation for wrong answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-12px); }
+            40%, 80% { transform: translateX(12px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Floating Score Text popup */
+        @keyframes floatUpFade {
+            0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -60px) scale(1); }
+        }
+        .score-popup {
+            position: absolute;
+            animation: floatUpFade 1s ease-out forwards;
+            pointer-events: none;
+            font-family: 'Fredoka One', cursive;
+            font-weight: bold;
+            z-index: 50;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C5A3FF;
+            border-radius: 10px;
+        }
+
+        /* Glassmorphism containers */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 4px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Mascot Mascot animations */
+        @keyframes pulse-gentle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        .mascot-bounce {
+            animation: pulse-gentle 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 text-cute-dark relative">
+
+    <!-- Background Decorative Elements -->
+    <div class="fixed top-10 left-10 text-6xl opacity-30 animate-float-slow pointer-events-none">⭐</div>
+    <div class="fixed top-20 right-12 text-7xl opacity-30 animate-float-fast pointer-events-none">☁️</div>
+    <div class="fixed bottom-12 left-16 text-7xl opacity-30 animate-float-fast pointer-events-none">🌸</div>
+    <div class="fixed bottom-10 right-10 text-6xl opacity-30 animate-float-slow pointer-events-none">🎈</div>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-xl glass-card rounded-3xl p-6 md:p-8 relative z-10 transition-all duration-300">
+
+        <!-- Header / Stats Bar -->
+        <div id="game-header" class="hidden mb-6">
+            <div class="flex justify-between items-center mb-3 bg-white/70 p-3 rounded-2xl shadow-inner border-2 border-pink-200">
+                <!-- Score -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-full bg-amber-300 flex items-center justify-center text-amber-700 font-bold text-xl shadow">
+                        <i class="fa-solid font-bold fa-star"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 font-bold">目前分數</div>
+                        <div id="score-text" class="text-2xl font-black text-amber-600 tracking-wider">0</div>
+                    </div>
+                </div>
+
+                <!-- Combo Counter -->
+                <div id="combo-container" class="opacity-0 transition-opacity duration-300 flex items-center space-x-1 bg-purple-100 px-3 py-1 rounded-full border-2 border-purple-300">
+                    <span class="text-xs text-purple-600 font-bold">連勝</span>
+                    <span id="combo-text" class="text-xl font-black text-purple-700">x0</span>
+                    <span class="text-lg">🔥</span>
+                </div>
+
+                <!-- Timer -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-full bg-rose-300 flex items-center justify-center text-rose-700 font-bold text-lg shadow">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 font-bold">剩餘時間</div>
+                        <div id="timer-text" class="text-2xl font-black text-rose-600 tracking-wider">60s</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden p-0.5 border border-white">
+                <div id="timer-bar" class="bg-gradient-to-r from-pink-400 to-rose-500 h-full rounded-full transition-all duration-1000 ease-linear" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <!-- Popups Container for floating points -->
+        <div id="popup-layer" class="relative w-full"></div>
+
+        <!-- ==================== SCREEN 1: START SCREEN ==================== -->
+        <div id="start-screen" class="text-center py-6">
+            <div class="text-7xl mb-4 mascot-bounce inline-block filter drop-shadow-md">🐱‍🏍</div>
+            <h1 class="text-3xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 tracking-wide">
+                可愛數學大冒險
+            </h1>
+            <p class="text-gray-600 font-bold mb-6 text-sm md:text-base">挑戰你的三位數乘除法運算極限！</p>
+
+            <div class="bg-pink-50 border-2 border-pink-200 rounded-2xl p-4 mb-6 text-left shadow-sm space-y-2 text-sm text-gray-700">
+                <div class="flex items-center space-x-2 font-bold text-pink-600 text-base mb-1">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>遊戲規則：</span>
+                </div>
+                <p>🔹 包含 <b>3位數 × 2位數</b> 與 <b>3位數 ÷ 2位數</b> 的隨機題目。</p>
+                <p>🔹 除法題目皆為<b>整除無餘數</b>，考驗心算與速算！</p>
+                <p>🔹 連續答對可累積<b>連勝加成 (Combo)</b> 賺取更高分數！</p>
+                <p>🔹 限時 60 秒，看看你能挑戰幾分！</p>
+            </div>
+
+            <!-- Sound toggle button -->
+            <button id="sound-toggle-btn" onclick="toggleSound()" class="mb-6 px-4 py-2 bg-white border-2 border-gray-200 rounded-full font-bold text-gray-600 hover:bg-gray-50 flex items-center justify-center mx-auto space-x-2 shadow-sm text-sm">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-pink-500"></i>
+                <span id="sound-text">音效: 開啟</span>
+            </button>
+
+            <div>
+                <button onclick="startGame()" class="btn-bounce w-full py-4 bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 text-white font-black text-xl rounded-2xl shadow-lg border-b-4 border-indigo-500 hover:brightness-105 active:border-b-0">
+                    🚀 開始大冒險！
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== SCREEN 2: GAME SCREEN ==================== -->
+        <div id="game-screen" class="hidden">
+            <!-- Mascot & Speech Bubble -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="mascot" class="text-5xl md:text-6xl transition-transform duration-300 mascot-bounce filter drop-shadow">
+                        🐱
+                    </div>
+                    <div id="mascot-speech" class="bg-white px-4 py-2 rounded-2xl border-2 border-pink-200 text-xs md:text-sm font-bold text-pink-600 shadow-sm relative">
+                        加油！你可以算出來的！
+                        <div class="absolute top-1/2 -left-2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-white border-b-8 border-b-transparent"></div>
+                    </div>
+                </div>
+
+                <!-- Mode Indicator Badge -->
+                <div id="question-type-badge" class="px-3 py-1 bg-indigo-100 border-2 border-indigo-300 text-indigo-700 font-black rounded-full text-xs shadow-sm">
+                    乘法運算
+                </div>
+            </div>
+
+            <!-- Problem Card -->
+            <div id="problem-card" class="bg-gradient-to-br from-white to-pink-50 border-4 border-pink-200 rounded-3xl p-6 text-center shadow-md mb-4 relative overflow-hidden transition-all duration-300">
+                <div class="text-xs font-bold text-gray-400 mb-1 tracking-widest uppercase">Question</div>
+                <div id="problem-text" class="text-3xl md:text-5xl font-black text-gray-800 tracking-wider font-cute py-2">
+                    245 × 38 = ?
+                </div>
+            </div>
+
+            <!-- Hint Box Banner (Shown on Wrong Answer or Hint Request) -->
+            <div id="hint-box" class="hidden mb-4 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-xs md:text-sm text-amber-900 font-bold shadow-sm animate-bounce-short">
+                <div class="flex items-center space-x-2 text-amber-700 font-extrabold mb-2 text-sm md:text-base border-b border-amber-200 pb-1">
+                    <span class="text-xl">✏️</span>
+                    <span>直式計算提示：</span>
+                </div>
+                <div id="hint-text" class="font-mono bg-white/80 p-3 rounded-xl border border-amber-200 space-y-1 overflow-x-auto text-gray-800 leading-relaxed">
+                    <!-- Dynamic vertical calculation steps will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="options-grid" class="grid grid-cols-2 gap-3 md:gap-4">
+                <!-- Buttons will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- ==================== SCREEN 3: RESULT SCREEN ==================== -->
+        <div id="result-screen" class="hidden text-center py-4">
+            <div id="result-mascot" class="text-7xl mb-2 animate-bounce inline-block">🏆</div>
+            <h2 class="text-3xl font-black text-gray-800 mb-1">冒險結束！</h2>
+            <p id="result-subtitle" class="text-gray-500 font-bold mb-6 text-sm">太厲害了！你完成了這次挑戰！</p>
+
+            <!-- Result Cards -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-amber-50 border-2 border-amber-200 p-3 rounded-2xl">
+                    <div class="text-xs text-amber-600 font-bold">最終得分</div>
+                    <div id="final-score" class="text-3xl font-black text-amber-600">0</div>
+                </div>
+                <div class="bg-purple-50 border-2 border-purple-200 p-3 rounded-2xl">
+                    <div class="text-xs text-purple-600 font-bold">最高連勝</div>
+                    <div id="final-combo" class="text-3xl font-black text-purple-600">0</div>
+                </div>
+                <div class="bg-emerald-50 border-2 border-emerald-200 p-3 rounded-2xl">
+                    <div class="text-xs text-emerald-600 font-bold">答對題數</div>
+                    <div id="final-correct" class="text-3xl font-black text-emerald-600">0</div>
+                </div>
+                <div class="bg-rose-50 border-2 border-rose-200 p-3 rounded-2xl">
+                    <div class="text-xs text-rose-600 font-bold">正確率</div>
+                    <div id="final-accuracy" class="text-3xl font-black text-rose-600">0%</div>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="btn-bounce w-full py-4 bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 text-white font-black text-xl rounded-2xl shadow-lg border-b-4 border-indigo-500 hover:brightness-105 active:border-b-0">
+                🔄 再玩一次！
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Web Audio API Sound Effects Synthesizer -->
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playCorrect() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                
+                // Cute double chime (E5 -> A5)
+                const osc1 = this.ctx.createOscillator();
+                const gain1 = this.ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(659.25, now); // E5
+                osc1.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+                
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                
+                osc1.connect(gain1);
+                gain1.connect(this.ctx.destination);
+                
+                osc1.start(now);
+                osc1.stop(now + 0.35);
+            }
+
+            playWrong() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+
+                // Gentle low boop
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(220, now); // A3
+                osc.frequency.linearRampToValueAtTime(140, now + 0.2);
+                
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+
+            playVictory() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.3);
+                });
+            }
+        }
+
+        const sound = new SoundFX();
+
+        function toggleSound() {
+            sound.enabled = !sound.enabled;
+            const icon = document.getElementById('sound-icon');
+            const text = document.getElementById('sound-text');
+            if (sound.enabled) {
+                icon.className = 'fa-solid fa-volume-high text-pink-500';
+                text.innerText = '音效: 開啟';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-gray-400';
+                text.innerText = '音效: 靜音';
+            }
+        }
+    </script>
+
+    <!-- Game Logic Script -->
+    <script>
+        // Game State Variables
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let totalQuestions = 0;
+        let correctQuestions = 0;
+        let timeLeft = 60;
+        let timerInterval = null;
+        let currentProblem = null;
+        let isAnswering = false;
+        let triesCurrentQuestion = 0;
+
+        // Mascot expressions
+        const MASCOTS = {
+            idle: { emoji: '🐱', text: '準備好心算敏捷挑戰了嗎？' },
+            happy: { emoji: '😸', text: '答對了！太棒了～✨' },
+            excited: { emoji: '😻', text: '連勝中！簡直是數學天才！🔥' },
+            sad: { emoji: '😿', text: '答錯囉，看看提示再試一次吧！💪' }
+        };
+
+        // Utility: Random Integer between min and max inclusive
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Generate Math Problem with tailored hints
+        function generateProblem() {
+            const isMultiplication = Math.random() < 0.5;
+            let num1, num2, answer, typeStr, textStr, hintStr;
+
+            if (isMultiplication) {
+                // 3-digit x 2-digit
+                num1 = getRandomInt(100, 999);
+                num2 = getRandomInt(11, 99);
+                answer = num1 * num2;
+                typeStr = "乘法運算 ✖️";
+                textStr = `${num1} × ${num2} = ?`;
+
+                const tens = Math.floor(num2 / 10);
+                const ones = num2 % 10;
+                const step1 = num1 * ones;
+                const step2 = num1 * tens;
+
+                // Vertical column hint breakdown
+                hintStr = `
+                    <div class="space-y-1">
+                        <div><b>【步驟 1】先算個位數：</b> ${num1} × ${ones} = <span class="text-pink-600 font-bold">${step1}</span></div>
+                        <div><b>【步驟 2】再算十位數：</b> ${num1} × ${tens}0 = <span class="text-purple-600 font-bold">${step2}0</span></div>
+                        <div class="pt-1 border-t border-dashed border-gray-300"><b>【步驟 3】兩者相加：</b> ${step1} + ${step2}0 = <span class="text-emerald-600 font-bold">${answer}</span></div>
+                    </div>
+                `;
+            } else {
+                // 3-digit / 2-digit (clean whole number integer result)
+                num2 = getRandomInt(11, 98); // Divisor (2 digits)
+                answer = getRandomInt(10, Math.floor(999 / num2)); // Ensure Dividend < 1000
+                num1 = num2 * answer; // Dividend (3 digits)
+                
+                typeStr = "除法運算 ➗";
+                textStr = `${num1} ÷ ${num2} = ?`;
+
+                const ansTens = Math.floor(answer / 10);
+                const ansOnes = answer % 10;
+
+                if (ansTens > 0) {
+                    const step1 = num2 * ansTens;
+                    const rem1 = Math.floor(num1 / 10) - step1;
+                    const nextVal = rem1 * 10 + (num1 % 10);
+                    hintStr = `
+                        <div class="space-y-1">
+                            <div><b>【步驟 1】商的十位：</b> ${num2} × <span class="text-pink-600 font-bold">${ansTens}</span> = ${step1} （被除數前兩位試商）</div>
+                            <div><b>【步驟 2】餘數落位：</b> 餘 ${rem1}，放下個位數變成 <span class="text-purple-600 font-bold">${nextVal}</span></div>
+                            <div class="pt-1 border-t border-dashed border-gray-300"><b>【步驟 3】商的個位：</b> ${nextVal} ÷ ${num2} = <span class="text-emerald-600 font-bold">${ansOnes}</span>，商為 <span class="text-emerald-600 font-bold">${answer}</span></div>
+                        </div>
+                    `;
+                } else {
+                    hintStr = `
+                        <div class="space-y-1">
+                            <div><b>【直式除法】：</b> 查看前兩位不夠除，看三位數：</div>
+                            <div class="pt-1 border-t border-dashed border-gray-300"><b>【步驟】：</b> ${num1} ÷ ${num2} = <span class="text-emerald-600 font-bold">${answer}</span>（整除無餘數）</div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Generate 3 clever distractors
+            const distractors = new Set();
+            while (distractors.size < 3) {
+                let offset;
+                const randType = Math.random();
+                if (randType < 0.33) {
+                    offset = getRandomInt(1, 9) * (Math.random() < 0.5 ? 1 : -1);
+                } else if (randType < 0.66) {
+                    offset = getRandomInt(1, 5) * 10 * (Math.random() < 0.5 ? 1 : -1);
+                } else {
+                    offset = getRandomInt(1, 3) * 100 * (Math.random() < 0.5 ? 1 : -1);
+                }
+
+                let wrongAns = answer + offset;
+                if (wrongAns > 0 && wrongAns !== answer) {
+                    distractors.add(wrongAns);
+                }
+            }
+
+            // Combine and shuffle choices
+            const choices = [answer, ...Array.from(distractors)];
+            choices.sort(() => Math.random() - 0.5);
+
+            return {
+                num1,
+                num2,
+                answer,
+                typeStr,
+                textStr,
+                hintStr,
+                choices
+            };
+        }
+
+        // Start Game
+        function startGame() {
+            // Reset stats
+            score = 0;
+            combo = 0;
+            maxCombo = 0;
+            totalQuestions = 0;
+            correctQuestions = 0;
+            timeLeft = 60;
+            isAnswering = false;
+
+            // Update UI
+            document.getElementById('score-text').innerText = '0';
+            document.getElementById('combo-text').innerText = 'x0';
+            document.getElementById('combo-container').classList.add('opacity-0');
+            document.getElementById('timer-text').innerText = '60s';
+            document.getElementById('timer-bar').style.width = '100%';
+
+            // Show Game UI, Hide others
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('game-header').classList.remove('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            updateMascot('idle');
+
+            // Start Timer
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+
+            // Load first question
+            nextQuestion();
+        }
+
+        // Timer Function
+        function updateTimer() {
+            timeLeft--;
+            document.getElementById('timer-text').innerText = `${timeLeft}s`;
+            
+            const progressPercent = (timeLeft / 60) * 100;
+            document.getElementById('timer-bar').style.width = `${Math.max(0, progressPercent)}%`;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        // Render Next Question
+        function nextQuestion() {
+            isAnswering = false;
+            triesCurrentQuestion = 0;
+            currentProblem = generateProblem();
+
+            // Hide hint box for new question
+            document.getElementById('hint-box').classList.add('hidden');
+
+            // Render text
+            document.getElementById('question-type-badge').innerText = currentProblem.typeStr;
+            document.getElementById('problem-text').innerText = currentProblem.textStr;
+            document.getElementById('hint-text').innerHTML = currentProblem.hintStr;
+
+            // Render options buttons
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+
+            const btnColors = [
+                'bg-pink-100 hover:bg-pink-200 border-pink-300 text-pink-800',
+                'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800',
+                'bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-800',
+                'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800'
+            ];
+
+            currentProblem.choices.forEach((choice, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `btn-bounce py-4 px-2 rounded-2xl border-b-4 font-black text-xl md:text-2xl shadow-sm transition-all duration-150 ${btnColors[idx % 4]}`;
+                btn.innerText = choice.toLocaleString();
+                btn.onclick = () => handleAnswer(choice, btn);
+                grid.appendChild(btn);
+            });
+        }
+
+        // Handle Choice Selection with Try-Again and Hints
+        function handleAnswer(selectedChoice, btnElement) {
+            if (isAnswering || btnElement.disabled) return;
+
+            const isCorrect = (selectedChoice === currentProblem.answer);
+
+            if (isCorrect) {
+                isAnswering = true;
+                totalQuestions++;
+
+                sound.playCorrect();
+                if (triesCurrentQuestion === 0) {
+                    correctQuestions++;
+                    combo++;
+                    if (combo > maxCombo) maxCombo = combo;
+                } else {
+                    combo = 0; // Reset combo if solved on 2nd+ try
+                }
+
+                // Calculate Score (Base 100, less points if took multiple attempts)
+                const basePoints = Math.max(30, 100 - triesCurrentQuestion * 35);
+                const pointsGained = basePoints + (combo > 0 ? (combo - 1) * 20 : 0);
+                score += pointsGained;
+
+                // UI Animations
+                btnElement.className = 'py-4 px-2 rounded-2xl border-b-4 font-black text-xl md:text-2xl shadow-sm transition-all duration-150 bg-green-400 text-white border-green-600 scale-105';
+
+                showFloatingText(btnElement, `+${pointsGained}!`);
+                triggerConfetti();
+
+                updateMascot(combo >= 3 ? 'excited' : 'happy');
+
+                // Update stats text
+                document.getElementById('score-text').innerText = score;
+                document.getElementById('combo-text').innerText = `x${combo}`;
+                
+                const comboContainer = document.getElementById('combo-container');
+                if (combo > 1) {
+                    comboContainer.classList.remove('opacity-0');
+                } else {
+                    comboContainer.classList.add('opacity-0');
+                }
+
+                // Transition to next question after small delay
+                setTimeout(() => {
+                    if (timeLeft > 0) {
+                        nextQuestion();
+                    }
+                }, 700);
+
+            } else {
+                // Wrong Answer: Give Hint and allow Try Again!
+                triesCurrentQuestion++;
+                sound.playWrong();
+                combo = 0; // Reset combo
+
+                // Shake and disable ONLY the wrong button
+                btnElement.classList.add('animate-shake', 'opacity-50', 'bg-red-200', 'border-red-300', 'text-red-600', 'line-through');
+                btnElement.disabled = true;
+
+                // Shake problem card
+                const card = document.getElementById('problem-card');
+                card.classList.add('animate-shake');
+                setTimeout(() => card.classList.remove('animate-shake'), 500);
+
+                // Reveal Hint
+                document.getElementById('hint-box').classList.remove('hidden');
+
+                // Update Mascot to offer encouragement
+                updateMascot('sad');
+
+                // Update Combo Display
+                document.getElementById('combo-text').innerText = `x${combo}`;
+                document.getElementById('combo-container').classList.add('opacity-0');
+            }
+        }
+
+        // Floating points popup
+        function showFloatingText(element, text) {
+            const rect = element.getBoundingClientRect();
+            const popup = document.createElement('div');
+            popup.className = 'score-popup text-amber-500 text-2xl md:text-3xl filter drop-shadow';
+            popup.innerText = text;
+            popup.style.left = `${rect.left + rect.width / 2}px`;
+            popup.style.top = `${rect.top}px`;
+
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        // Mascot Helper
+        function updateMascot(state) {
+            const m = MASCOTS[state] || MASCOTS.idle;
+            document.getElementById('mascot').innerText = m.emoji;
+            document.getElementById('mascot-speech').innerText = m.text;
+        }
+
+        // Confetti Burst Effect
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 30,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+            }
+        }
+
+        // End Game Summary
+        function endGame() {
+            clearInterval(timerInterval);
+            sound.playVictory();
+
+            document.getElementById('game-header').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const accuracy = totalQuestions > 0 ? Math.round((correctQuestions / totalQuestions) * 100) : 0;
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-combo').innerText = `x${maxCombo}`;
+            document.getElementById('final-correct').innerText = `${correctQuestions} 題`;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+
+            // Result mascot reaction based on accuracy
+            const resMascot = document.getElementById('result-mascot');
+            const resSubtitle = document.getElementById('result-subtitle');
+            if (accuracy >= 80) {
+                resMascot.innerText = '🌟';
+                resSubtitle.innerText = '驚人的計算實力！簡直是數學神童！';
+            } else if (accuracy >= 50) {
+                resMascot.innerText = '🎉';
+                resSubtitle.innerText = '表現得很不錯喔！繼續保持進步！';
+            } else {
+                resMascot.innerText = '🐥';
+                resSubtitle.innerText = '再接再厲！多練習一定會越來越棒！';
+            }
+
+            // Big victory confetti
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 100,
+                    origin: { y: 0.5 }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
