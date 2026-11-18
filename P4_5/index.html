@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>太空兔的「倍數」星際跳躍｜小四數學互動遊戲</title>
+  <style>
+    :root {
+      --space-bg: #0f172a;
+      --indigo-dark: #312e81;
+      --indigo-main: #4f46e5;
+      --indigo-light: #e0e7ff;
+      --cyan-main: #06b6d4;
+      --cyan-light: #cffafe;
+      --amber-main: #f59e0b;
+      --amber-light: #fef3c7;
+      --emerald-main: #10b981;
+      --emerald-light: #d1fae5;
+      --rose-main: #f43f5e;
+      --rose-light: #ffe4e6;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 星空背景裝飾 */
+    body::before {
+      content: "✦ ✧ ★ ✦ ✧ ★ ✦ ✧ ★ ✦ ✧";
+      position: fixed;
+      top: 18px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      letter-spacing: 38px;
+      color: rgba(253, 224, 71, 0.22);
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* 頂部進度列 */
+    .header-bar {
+      width: 100%;
+      max-width: 940px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 3px solid #a5b4fc;
+      border-radius: 24px;
+      padding: 12px 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      margin-bottom: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      font-size: 38px;
+      display: inline-block;
+      animation: rocketFloat 2.8s ease-in-out infinite;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #312e81;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #4f46e5;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .star-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--amber-light);
+      border: 2px solid #fcd34d;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #92400e;
+    }
+
+    .home-btn {
+      background: #eef2ff;
+      border: 2px solid #c7d2fe;
+      color: #3730a3;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 7px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .home-btn:hover { background: #e0e7ff; }
+
+    /* 主遊戲舞台卡片 */
+    .game-card {
+      width: 100%;
+      max-width: 940px;
+      flex: 1;
+      background: #ffffff;
+      border: 4px solid #818cf8;
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 模式選擇主畫面 */
+    .menu-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 8px 4px;
+      gap: 16px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .menu-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #1e1b4b;
+    }
+
+    .menu-desc {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .mode-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .mode-card {
+      border-radius: 22px;
+      padding: 18px 16px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      gap: 6px;
+      transition: transform 0.15s ease;
+    }
+    .mode-card:hover { transform: translateY(-3px); }
+    .mode-card:active { transform: translateY(2px); }
+
+    .m-card-1 {
+      background: #eef2ff;
+      border-color: #818cf8;
+      border-bottom: 6px solid #4338ca;
+      color: #312e81;
+    }
+    .m-card-2 {
+      background: #ecfeff;
+      border-color: #22d3ee;
+      border-bottom: 6px solid #0891b2;
+      color: #164e63;
+    }
+    .m-card-3 {
+      background: #fffbeb;
+      border-color: #fbbf24;
+      border-bottom: 6px solid #d97706;
+      color: #78350f;
+    }
+    .m-card-4 {
+      background: #ecfdf5;
+      border-color: #34d399;
+      border-bottom: 6px solid #059669;
+      color: #064e3b;
+    }
+    .m-card-all {
+      grid-column: 1 / -1;
+      background: linear-gradient(90deg, #fdf4ff 0%, #eff6ff 100%);
+      border-color: #c084fc;
+      border-bottom: 6px solid #7e22ce;
+      color: #581c87;
+      align-items: center;
+      text-align: center;
+    }
+
+    .mode-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .mode-example {
+      font-size: 14px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    /* 關卡頂部標籤與進度 */
+    .stage-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .stage-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .bg-indigo { background: #4f46e5; }
+    .bg-cyan { background: #0891b2; }
+    .bg-amber { background: #d97706; }
+    .bg-emerald { background: #059669; }
+    .bg-purple { background: #7e22ce; }
+
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .p-dot {
+      width: 22px;
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+    }
+    .p-dot.done { background: #10b981; }
+    .p-dot.current { background: #f59e0b; width: 32px; }
+
+    /* 星際倍數跳躍提示台（視覺化倍數規律） */
+    .visual-stage {
+      background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+      border: 3px solid #6366f1;
+      border-radius: 22px;
+      padding: 16px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .planet-track {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .planet-node {
+      background: rgba(255, 255, 255, 0.12);
+      border: 2px solid #818cf8;
+      border-radius: 14px;
+      padding: 6px 12px;
+      text-align: center;
+      min-width: 68px;
+    }
+
+    .planet-node.highlight {
+      background: rgba(251, 191, 36, 0.25);
+      border-color: #fbbf24;
+    }
+
+    .planet-top {
+      font-size: 11px;
+      font-weight: 800;
+      color: #c7d2fe;
+    }
+
+    .planet-val {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fde047;
+    }
+
+    .jump-arrow {
+      font-size: 13px;
+      font-weight: 900;
+      color: #38bdf8;
+    }
+
+    .visual-tip {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1.5px solid rgba(165, 180, 252, 0.5);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #e0e7ff;
+      text-align: center;
+    }
+
+    /* 題目與多空格作答區 ＋ 側邊迷你鍵盤 */
+    .question-arena {
+      width: 100%;
+      background: #f8fafc;
+      border: 3px solid #cbd5e1;
+      border-radius: 24px;
+      padding: 16px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .question-content {
+      flex: 1;
+      min-width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .q-sentence {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.7;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .blank-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      height: 50px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border: 3.5px solid #94a3b8;
+      background: #ffffff;
+      font-size: 24px;
+      font-weight: 900;
+      color: #1e293b;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .blank-box.active {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #3730a3;
+      box-shadow: 0 0 0 4px #c7d2fe;
+    }
+
+    .blank-box.correct {
+      border-color: #10b981;
+      background: #d1fae5;
+      color: #065f46;
+      box-shadow: none;
+    }
+
+    .blank-box.wrong {
+      border-color: #f43f5e;
+      background: #ffe4e6;
+      color: #be123c;
+      box-shadow: none;
+    }
+
+    .multi-slot-hint {
+      font-size: 13px;
+      font-weight: 800;
+      color: #4f46e5;
+    }
+
+    /* 迷你側邊數字鍵盤（支援三位數，如 104、117、156） */
+    .mini-keypad {
+      width: 210px;
+      background: #ffffff;
+      border: 2.5px solid #6366f1;
+      border-radius: 18px;
+      padding: 9px;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.15);
+      flex-shrink: 0;
+      margin: 0 auto;
+    }
+
+    .keypad-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding: 0 4px;
+    }
+
+    .keypad-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: #3730a3;
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .key-btn {
+      height: 36px;
+      border-radius: 10px;
+      border: none;
+      border-bottom: 3px solid #cbd5e1;
+      background: #f1f5f9;
+      color: #1e293b;
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .key-btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+    }
+
+    .keypad-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 5px;
+    }
+
+    .key-clear {
+      height: 34px;
+      border-radius: 10px;
+      border: none;
+      border-bottom: 3px solid #fda4af;
+      background: #ffe4e6;
+      color: #be123c;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .key-submit {
+      height: 34px;
+      border-radius: 10px;
+      border: none;
+      border-bottom: 3px solid #3730a3;
+      background: #4f46e5;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .key-clear:active, .key-submit:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+    }
+
+    /* 回饋橫幅 */
+    .feedback-banner {
+      width: 100%;
+      border-radius: 18px;
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .feedback-banner.wrong {
+      background: #ffe4e6;
+      border: 2.5px solid #fda4af;
+      color: #9f1239;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .feedback-banner.correct {
+      background: #d1fae5;
+      border: 3px solid #34d399;
+      color: #064e3b;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .next-btn {
+      background: #059669;
+      border: none;
+      border-bottom: 4px solid #064e3b;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 9px 20px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+    .next-btn:active {
+      transform: translateY(3px);
+      border-bottom-width: 1px;
+    }
+
+    /* 結算畫面 */
+    .result-box {
+      text-align: center;
+      padding: 22px;
+      background: linear-gradient(180deg, #eef2ff 0%, #ecfdf5 100%);
+      border: 4px dashed #6366f1;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .result-btns {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .action-pill-btn {
+      background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+      border: none;
+      border-bottom: 4px solid #312e81;
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 900;
+      padding: 12px 24px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+    .action-pill-btn.secondary {
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      border-bottom-color: #064e3b;
+    }
+
+    @keyframes rocketFloat {
+      0%, 100% { transform: translateY(0) rotate(-4deg); }
+      50% { transform: translateY(-6px) rotate(4deg); }
+    }
+    @keyframes shakeSide {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-7px); }
+      50% { transform: translateX(7px); }
+      75% { transform: translateX(-5px); }
+    }
+
+    @media (max-width: 680px) {
+      .mode-grid { grid-template-columns: 1fr; }
+      .q-sentence { font-size: 19px; }
+      .blank-box { min-width: 60px; height: 44px; font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- 頂部進度列 -->
+  <header class="header-bar">
+    <div class="brand">
+      <span class="brand-icon">🐰🚀</span>
+      <div>
+        <div class="brand-title">太空兔的「倍數」星際跳躍</div>
+        <div class="brand-sub">四年級數學｜點選空格並用右側數字鍵盤輸入倍數答案！</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="star-badge">
+        <span>⭐</span>
+        <span><span id="star-count">0</span> 顆能量星</span>
+      </div>
+      <button id="home-btn" class="home-btn" style="display:none;" onclick="backToMenu()">🪐 切換任務</button>
+    </div>
+  </header>
+
+  <!-- 主遊戲舞台 -->
+  <main id="game-card" class="game-card"></main>
+
+  <script>
+    // ==========================================
+    // 1. 音效模組 (SoundFX)
+    // ==========================================
+    const SoundFX = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      },
+      playTone(freq, type, duration, delay = 0, vol = 0.14) {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + delay);
+          osc.stop(this.ctx.currentTime + delay + duration);
+        } catch (e) {}
+      },
+      click() { this.playTone(620, 'sine', 0.08, 0, 0.12); },
+      success() {
+        this.playTone(523.25, 'triangle', 0.14, 0, 0.16);
+        this.playTone(659.25, 'triangle', 0.14, 0.09, 0.16);
+        this.playTone(783.99, 'triangle', 0.16, 0.18, 0.16);
+        this.playTone(1046.5, 'triangle', 0.28, 0.27, 0.18);
+      },
+      wrong() {
+        this.playTone(300, 'sine', 0.15, 0, 0.14);
+        this.playTone(235, 'sine', 0.2, 0.13, 0.14);
+      }
+    };
+
+    // ==========================================
+    // 2. 慶祝彩帶模組 (Confetti)
+    // ==========================================
+    const Confetti = {
+      particles: [],
+      animId: null,
+      launch() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#f59e0b', '#10b981', '#6366f1', '#38bdf8', '#f43f5e'];
+        for (let i = 0; i < 65; i++) {
+          this.particles.push({
+            x: Math.random() * canvas.width,
+            y: -20 - Math.random() * 120,
+            vx: (Math.random() - 0.5) * 6,
+            vy: 3 + Math.random() * 5,
+            size: 7 + Math.random() * 7,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rot: Math.random() * Math.PI * 2,
+            vrot: (Math.random() - 0.5) * 0.2
+          });
+        }
+
+        if (!this.animId) {
+          const tick = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+              const p = this.particles[i];
+              p.x += p.vx;
+              p.y += p.vy;
+              p.vy += 0.14;
+              p.rot += p.vrot;
+              ctx.save();
+              ctx.translate(p.x, p.y);
+              ctx.rotate(p.rot);
+              ctx.fillStyle = p.color;
+              ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+              ctx.restore();
+              if (p.y > canvas.height + 30) {
+                this.particles.splice(i, 1);
+              }
+            }
+            if (this.particles.length > 0) {
+              this.animId = requestAnimationFrame(tick);
+            } else {
+              this.animId = null;
+            }
+          };
+          this.animId = requestAnimationFrame(tick);
+        }
+      }
+    };
+
+    // ==========================================
+    // 3. 題庫生成器（完全隨機出題，涵蓋四大經典題型）
+    //    題型 1 (nth)：某數的第 N 個倍數是 [ ]。
+    //    題型 2 (list)：列出某數最初的五個倍數／在某數以內，某數的倍數有 [ ]...。
+    //    題型 3 (prevNext)：已知某倍數，下一個／上一個倍數是 [ ]。
+    //    題型 4 (limit)：某數以內，最大的倍數是 [ ]／有 [ ] 個某數的倍數。
+    // ==========================================
+    const CN_NUMS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // 題型 1：某數的第 N 個倍數
+    function makeNthQuestion() {
+      const base = randInt(3, 18);
+      const nth = randInt(2, 12);
+      const ans = base * nth;
+      return {
+        key: `nth-${base}-${nth}`,
+        type: 'nth',
+        badge: '🚀 任務一：尋找第幾個倍數',
+        badgeClass: 'bg-indigo',
+        parts: [`${base} 的第${CN_NUMS[nth]}個倍數是 `, ' 。'],
+        answers: [ans],
+        visualHTML: `
+          <div class="planet-track">
+            <div class="planet-node"><div class="planet-top">第 1 個</div><div class="planet-val">${base}</div></div>
+            <span class="jump-arrow">➔</span>
+            <div class="planet-node"><div class="planet-top">第 2 個</div><div class="planet-val">${base * 2}</div></div>
+            <span class="jump-arrow">➔ ... ➔</span>
+            <div class="planet-node highlight"><div class="planet-top">第 ${nth} 個</div><div class="planet-val">${base} × ${nth}</div></div>
+          </div>
+          <div class="visual-tip">💡 算式提示：${base} 的第 ${nth} 個倍數 ＝ ${base} × ${nth}</div>
+        `,
+        hint: `用乘法算算看：${base} × ${nth} 是多少呢？`,
+        success: `太準了！${base} × ${nth} ＝ ${ans}，所以 ${base} 的第${CN_NUMS[nth]}個倍數是 ${ans}！`
+      };
+    }
+
+    // 題型 2：列出最初的五個倍數 / 某數以內的所有倍數（隨機多空格題）
+    function makeListQuestion() {
+      const subType = Math.random() < 0.5 ? 'first5' : 'withinList';
+      if (subType === 'first5') {
+        const base = randInt(4, 19);
+        const ans = [base, base * 2, base * 3, base * 4, base * 5];
+        return {
+          key: `first5-${base}`,
+          type: 'list',
+          badge: '🪐 任務二：倍數連續大跳躍',
+          badgeClass: 'bg-cyan',
+          parts: [`列出 ${base} 最初的五個倍數：`, ' ， ', ' ， ', ' ， ', ' ， ', ' 。'],
+          answers: ans,
+          visualHTML: `
+            <div class="planet-track">
+              <div class="planet-node highlight"><div class="planet-top">第 1 個</div><div class="planet-val">${base} × 1</div></div>
+              <span class="jump-arrow">+${base} ➔</span>
+              <div class="planet-node"><div class="planet-top">第 2 個</div><div class="planet-val">${base} × 2</div></div>
+              <span class="jump-arrow">+${base} ➔</span>
+              <div class="planet-node"><div class="planet-top">第 3 個</div><div class="planet-val">${base} × 3</div></div>
+              <span class="jump-arrow">+${base} ➔</span>
+              <div class="planet-node"><div class="planet-top">第 4 個</div><div class="planet-val">${base} × 4</div></div>
+              <span class="jump-arrow">+${base} ➔</span>
+              <div class="planet-node"><div class="planet-top">第 5 個</div><div class="planet-val">${base} × 5</div></div>
+            </div>
+            <div class="visual-tip">💡 提示：第 1 個倍數就是 ${base} 本身，每次再加 ${base} 即可！</div>
+          `,
+          hint: `從 ${base} 開始（${base}×1），每次加上 ${base}，依序填入 5 個空格！`,
+          success: `太厲害了！${base} 最初的五個倍數就是 ${ans.join('、')}！`
+        };
+      } else {
+        // 隨機產生範圍與基數，控制倍數個數在 3～5 個之間方便作答
+        const base = randInt(6, 18);
+        const count = randInt(3, 5);
+        const limit = base * count + randInt(1, base - 1);
+        const ans = [];
+        for (let m = base; m <= limit; m += base) {
+          ans.push(m);
+        }
+        const parts = [`在 ${limit} 以內，${base} 的倍數有 `];
+        for (let i = 0; i < ans.length; i++) {
+          parts.push(i < ans.length - 1 ? ' 、 ' : ' 。');
+        }
+        return {
+          key: `within-${limit}-${base}`,
+          type: 'list',
+          badge: '🪐 任務二：倍數連續大跳躍',
+          badgeClass: 'bg-cyan',
+          parts,
+          answers: ans,
+          visualHTML: `
+            <div class="planet-track">
+              <div class="planet-node highlight"><div class="planet-top">起點</div><div class="planet-val">${base}</div></div>
+              <span class="jump-arrow">+${base} ➔</span>
+              <div class="planet-node"><div class="planet-top">繼續跳</div><div class="planet-val">...</div></div>
+              <span class="jump-arrow">➔</span>
+              <div class="planet-node highlight"><div class="planet-top">終點界線</div><div class="planet-val">不超過 ${limit}</div></div>
+            </div>
+            <div class="visual-tip">💡 提示：從 ${base} 開始每次加 ${base}，直到超過 ${limit} 為止（共 ${ans.length} 個）！</div>
+          `,
+          hint: `依序寫出比 ${limit} 小的 ${base} 的倍數（第 1 個是 ${base}）！`,
+          success: `完全正確！在 ${limit} 以內，${base} 的倍數有 ${ans.join('、')}！`
+        };
+      }
+    }
+
+    // 題型 3：已知某倍數，求「下一個」或「上一個」倍數
+    function makePrevNextQuestion() {
+      const dir = Math.random() < 0.5 ? 'next' : 'prev';
+      const base = randInt(6, 19);
+      if (dir === 'next') {
+        const k = randInt(5, 15);
+        const given = base * k;
+        const ans = given + base;
+        return {
+          key: `next-${base}-${k}`,
+          type: 'prevNext',
+          badge: '🛸 任務三：上一個與下一個倍數',
+          badgeClass: 'bg-amber',
+          parts: [`${given} 是 ${base} 的倍數，下一個 ${base} 的倍數是 `, ' 。'],
+          answers: [ans],
+          visualHTML: `
+            <div class="planet-track">
+              <div class="planet-node"><div class="planet-top">目前位置</div><div class="planet-val">${given}</div></div>
+              <span class="jump-arrow">＋ ${base} ➔</span>
+              <div class="planet-node highlight"><div class="planet-top">下一個倍數</div><div class="planet-val">${given} ＋ ${base}</div></div>
+            </div>
+            <div class="visual-tip">💡 秘訣：找「下一個」${base} 的倍數，只要把 ${given} 再加上 ${base} 就好囉！</div>
+          `,
+          hint: `因為相鄰兩個 ${base} 的倍數相差 ${base}，所以用 ${given} ＋ ${base} 算算看！`,
+          success: `答對了！${given} ＋ ${base} ＝ ${ans}，下一個 ${base} 的倍數就是 ${ans}！`
+        };
+      } else {
+        const k = randInt(6, 16);
+        const given = base * k;
+        const ans = given - base;
+        return {
+          key: `prev-${base}-${k}`,
+          type: 'prevNext',
+          badge: '🛸 任務三：上一個與下一個倍數',
+          badgeClass: 'bg-amber',
+          parts: [`${given} 是 ${base} 的倍數，上一個 ${base} 的倍數是 `, ' 。'],
+          answers: [ans],
+          visualHTML: `
+            <div class="planet-track">
+              <div class="planet-node highlight"><div class="planet-top">上一個倍數</div><div class="planet-val">${given} － ${base}</div></div>
+              <span class="jump-arrow">⬅ － ${base}</span>
+              <div class="planet-node"><div class="planet-top">目前位置</div><div class="planet-val">${given}</div></div>
+            </div>
+            <div class="visual-tip">💡 秘訣：找「上一個」${base} 的倍數，只要把 ${given} 減去 ${base} 就好囉！</div>
+          `,
+          hint: `往回跳一步！把 ${given} 減去 ${base} 是多少呢？`,
+          success: `太棒了！${given} － ${base} ＝ ${ans}，上一個 ${base} 的倍數就是 ${ans}！`
+        };
+      }
+    }
+
+    // 題型 4：範圍內「最大的倍數」或「共有幾個倍數」
+    function makeLimitQuestion() {
+      const sub = Math.random() < 0.5 ? 'max' : 'count';
+      const limits = [50, 60, 80, 100, 120, 150];
+      const limit = limits[randInt(0, limits.length - 1)];
+      const base = randInt(6, 18);
+      const count = Math.floor(limit / base);
+
+      if (sub === 'max') {
+        const ans = base * count;
+        return {
+          key: `max-${limit}-${base}`,
+          type: 'limit',
+          badge: '🌟 任務四：範圍內最大倍數與個數',
+          badgeClass: 'bg-emerald',
+          parts: [`${limit} 以內，最大的 ${base} 的倍數是 `, ' 。'],
+          answers: [ans],
+          visualHTML: `
+            <div class="planet-track">
+              <div class="planet-node"><div class="planet-top">算算看</div><div class="planet-val">${limit} ÷ ${base} ＝ ${count} ... ${limit % base}</div></div>
+              <span class="jump-arrow">➔</span>
+              <div class="planet-node highlight"><div class="planet-top">最大倍數</div><div class="planet-val">${base} × ${count}</div></div>
+            </div>
+            <div class="visual-tip">💡 提示：用 ${limit} ÷ ${base} 找出商是 ${count}，再算 ${base} × ${count} 就是最大倍數！</div>
+          `,
+          hint: `想想看 ${base} 乘以幾最接近 ${limit} 但不超過 ${limit}？（${base} × ${count}）`,
+          success: `答對了！${base} × ${count} ＝ ${ans}，是 ${limit} 以內最大的 ${base} 的倍數！`
+        };
+      } else {
+        return {
+          key: `count-${limit}-${base}`,
+          type: 'limit',
+          badge: '🌟 任務四：範圍內最大倍數與個數',
+          badgeClass: 'bg-emerald',
+          parts: [`${limit} 以內有 `, ` 個 ${base} 的倍數。`],
+          answers: [count],
+          visualHTML: `
+            <div class="planet-track">
+              <div class="planet-node"><div class="planet-top">除法小幫手</div><div class="planet-val">${limit} ÷ ${base}</div></div>
+              <span class="jump-arrow">➔</span>
+              <div class="planet-node highlight"><div class="planet-top">商 ＝ 倍數個數</div><div class="planet-val">${base} × ? ≤ ${limit}</div></div>
+            </div>
+            <div class="visual-tip">💡 提示：算算看 ${limit} ÷ ${base} 的商是多少，就有幾個 ${base} 的倍數！</div>
+          `,
+          hint: `用 ${limit} 除以 ${base}（${limit} ÷ ${base}），商數就是 ${base} 的倍數個數喔！`,
+          success: `太厲害了！${limit} ÷ ${base} ＝ ${count} ... ${limit % base}，所以有 ${count} 個 ${base} 的倍數！`
+        };
+      }
+    }
+
+    const TOTAL_QUESTIONS = 8;
+    let currentMode = null; // 'nth' | 'list' | 'prevNext' | 'limit' | 'all'
+    let questions = [];
+    let qIndex = 0;
+    let totalStars = 0;
+    let userInputs = []; // 支援多個空格，例如 ['13', '26', '', '', '']
+    let activeSlot = 0;  // 目前正在填寫第幾個空格
+    let feedback = null; // null | 'correct' | 'wrong'
+    let showResult = false;
+
+    function buildQuestionSet(mode) {
+      const arr = [];
+      const usedKeys = new Set();
+      const generators = {
+        nth: makeNthQuestion,
+        list: makeListQuestion,
+        prevNext: makePrevNextQuestion,
+        limit: makeLimitQuestion
+      };
+      const allKeys = ['nth', 'list', 'prevNext', 'limit'];
+
+      while (arr.length < TOTAL_QUESTIONS) {
+        const pickType = mode === 'all' ? allKeys[randInt(0, allKeys.length - 1)] : mode;
+        const q = generators[pickType]();
+        if (!usedKeys.has(q.key)) {
+          usedKeys.add(q.key);
+          arr.push(q);
+        }
+      }
+      return arr;
+    }
+
+    // ==========================================
+    // 4. 遊戲流程控制
+    // ==========================================
+    function startMode(mode) {
+      SoundFX.click();
+      currentMode = mode;
+      questions = buildQuestionSet(mode);
+      qIndex = 0;
+      initQuestionState();
+      showResult = false;
+      document.getElementById('home-btn').style.display = 'inline-block';
+      renderScreen();
+    }
+
+    function initQuestionState() {
+      const q = questions[qIndex];
+      userInputs = q.answers.map(() => '');
+      activeSlot = 0;
+      feedback = null;
+    }
+
+    function backToMenu() {
+      SoundFX.click();
+      currentMode = null;
+      showResult = false;
+      document.getElementById('home-btn').style.display = 'none';
+      renderScreen();
+    }
+
+    function selectSlot(idx) {
+      if (feedback === 'correct') return;
+      SoundFX.click();
+      activeSlot = idx;
+      if (feedback === 'wrong') feedback = null;
+      updateSlotsUI(false);
+    }
+
+    // ==========================================
+    // 5. 渲染畫面
+    // ==========================================
+    function renderScreen() {
+      document.getElementById('star-count').textContent = totalStars;
+      const card = document.getElementById('game-card');
+
+      // 1. 任務選擇首頁
+      if (!currentMode) {
+        card.innerHTML = `
+          <div class="menu-screen">
+            <div style="font-size: 56px; line-height: 1;">🐰🛸🪐</div>
+            <h2 class="menu-title">歡迎來到小四「倍數」星際訓練營！</h2>
+            <p class="menu-desc">請選擇要練習的倍數題型，或直接進入綜合大挑戰（每輪 8 題）：</p>
+
+            <div class="mode-grid">
+              <button class="mode-card m-card-1" onclick="startMode('nth')">
+                <div class="mode-header"><span>🚀</span><span>任務一：尋找第幾個倍數</span></div>
+                <div class="mode-example">例：5 的第六個倍數是 [ 30 ]。</div>
+              </button>
+
+              <button class="mode-card m-card-2" onclick="startMode('list')">
+                <div class="mode-header"><span>🪐</span><span>任務二：倍數連續大跳躍</span></div>
+                <div class="mode-example">例：列出 13 最初的五個倍數／30 以內 8 的倍數</div>
+              </button>
+
+              <button class="mode-card m-card-3" onclick="startMode('prevNext')">
+                <div class="mode-header"><span>🛸</span><span>任務三：上一個與下一個倍數</span></div>
+                <div class="mode-example">例：104 是 13 的倍數，下一個 13 的倍數是 [ 117 ]。</div>
+              </button>
+
+              <button class="mode-card m-card-4" onclick="startMode('limit')">
+                <div class="mode-header"><span>🌟</span><span>任務四：範圍內最大倍數與個數</span></div>
+                <div class="mode-example">例：100 以內，最大的 11 的倍數／有幾個 13 的倍數</div>
+              </button>
+
+              <button class="mode-card m-card-all" onclick="startMode('all')">
+                <div class="mode-header"><span>🏆</span><span>星際綜合大挑戰（包含以上全部題型！）</span></div>
+                <div class="mode-example">完整練習課本與工作紙上的四大類倍數題目！</div>
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 2. 過關結算畫面
+      if (showResult) {
+        card.innerHTML = `
+          <div class="result-box">
+            <div style="font-size: 62px;">🏆🐰🚀✨</div>
+            <h2 style="font-size: 28px; font-weight: 900; color: #312e81;">任務完成！你是星際「倍數」小達人！</h2>
+            <p style="font-size: 17px; font-weight: 800; color: #475569;">
+              太空兔已經成功收集了 <strong style="color:#d97706;font-size:24px;">${totalStars}</strong> 顆能量星！
+            </p>
+            <div class="result-btns">
+              <button class="action-pill-btn" onclick="startMode('${currentMode}')">🔄 再挑戰一次同任務</button>
+              <button class="action-pill-btn secondary" onclick="backToMenu()">🪐 選擇其他倍數任務</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 3. 進行中的題目畫面
+      const q = questions[qIndex];
+      const dotsHTML = Array.from({ length: TOTAL_QUESTIONS }, (_, i) => {
+        const cls = i < qIndex ? 'done' : (i === qIndex ? 'current' : '');
+        return `<span class="p-dot ${cls}"></span>`;
+      }).join('');
+
+      // 組合帶有多個可點擊方框的題目句子
+      let sentenceHTML = '';
+      for (let i = 0; i < q.parts.length; i++) {
+        sentenceHTML += `<span>${q.parts[i]}</span>`;
+        if (i < q.answers.length) {
+          const isAct = i === activeSlot;
+          sentenceHTML += `
+            <span id="slot-${i}" class="blank-box ${isAct ? 'active' : ''}" onclick="selectSlot(${i})">
+              <span style="color:#94a3b8;">？</span>
+            </span>
+          `;
+        }
+      }
+
+      card.innerHTML = `
+        <div>
+          <div class="stage-header">
+            <span class="stage-badge ${q.badgeClass}">${q.badge} ｜ 第 ${qIndex + 1} / ${TOTAL_QUESTIONS} 題</span>
+            <div class="progress-dots">${dotsHTML}</div>
+          </div>
+          <div class="visual-stage" style="margin-top: 12px;">
+            ${q.visualHTML}
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="question-arena">
+            <div class="question-content">
+              <div class="q-sentence">${sentenceHTML}</div>
+              ${q.answers.length > 1 ? `
+                <div class="multi-slot-hint">👆 本題共有 ${q.answers.length} 個空格：點選藍色框框輸入數字，按「確定 ✓」會自動跳到下一格喔！</div>
+              ` : ''}
+            </div>
+
+            <!-- 緊貼在題目右側的迷你數字鍵盤（支援最高三位數輸入） -->
+            <div id="mini-keypad" class="mini-keypad">
+              <div class="keypad-top">
+                <span class="keypad-label">🔢 數字鍵盤</span>
+              </div>
+              <div class="keypad-grid">
+                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(n => `
+                  <button class="key-btn" onclick="pressDigit(${n})">${n}</button>
+                `).join('')}
+              </div>
+              <div class="keypad-actions">
+                <button class="key-clear" onclick="clearDigit()">⌫ 清除</button>
+                <button class="key-submit" onclick="handleConfirm()">確定 ✓</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="feedback-container" style="width: 100%;"></div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 6. 無閃動局部更新空格與回饋橫幅
+    // ==========================================
+    function updateSlotsUI(animateWrong = false) {
+      const q = questions[qIndex];
+      const pad = document.getElementById('mini-keypad');
+      const fbContainer = document.getElementById('feedback-container');
+
+      for (let i = 0; i < q.answers.length; i++) {
+        const el = document.getElementById(`slot-${i}`);
+        if (!el) continue;
+
+        el.className = 'blank-box';
+        if (feedback === 'correct') {
+          el.classList.add('correct');
+        } else if (feedback === 'wrong') {
+          const val = userInputs[i];
+          if (val === '' || parseInt(val, 10) !== q.answers[i]) {
+            el.classList.add('wrong');
+            if (animateWrong) {
+              el.style.animation = 'none';
+              void el.offsetWidth;
+              el.style.animation = 'shakeSide 0.4s ease';
+            }
+          } else {
+            el.classList.add('correct');
+          }
+        } else if (i === activeSlot) {
+          el.classList.add('active');
+        }
+
+        el.innerHTML = userInputs[i] !== '' ? userInputs[i] : '<span style="color:#94a3b8;">？</span>';
+      }
+
+      if (pad) {
+        pad.style.display = feedback === 'correct' ? 'none' : 'block';
+      }
+
+      if (!fbContainer) return;
+      if (feedback === 'wrong') {
+        fbContainer.innerHTML = `
+          <div class="feedback-banner wrong">
+            <span>💡 提示：${q.hint}</span>
+          </div>
+        `;
+      } else if (feedback === 'correct') {
+        const nextText = qIndex < TOTAL_QUESTIONS - 1 ? '下一題 ➔' : '查看星際成績 🏆';
+        fbContainer.innerHTML = `
+          <div class="feedback-banner correct">
+            <span>🎉 ${q.success}（＋1 顆能量星 ⭐）</span>
+            <button class="next-btn" onclick="goNext()">${nextText}</button>
+          </div>
+        `;
+      } else {
+        fbContainer.innerHTML = '';
+      }
+    }
+
+    // ==========================================
+    // 7. 迷你鍵盤數字輸入（支援三位數，如 104、117、156）
+    // ==========================================
+    function pressDigit(num) {
+      if (feedback === 'correct') return;
+      SoundFX.click();
+
+      if (feedback === 'wrong') {
+        feedback = null;
+        userInputs[activeSlot] = String(num);
+        updateSlotsUI(false);
+        return;
+      }
+
+      const cur = userInputs[activeSlot];
+      if (cur === '' || cur === '0') {
+        userInputs[activeSlot] = String(num);
+      } else if (cur.length < 3) {
+        userInputs[activeSlot] = cur + String(num);
+      } else {
+        userInputs[activeSlot] = String(num);
+      }
+      updateSlotsUI(false);
+    }
+
+    function clearDigit() {
+      if (feedback === 'correct') return;
+      SoundFX.click();
+      userInputs[activeSlot] = '';
+      feedback = null;
+      updateSlotsUI(false);
+    }
+
+    function handleConfirm() {
+      if (feedback === 'correct') return;
+      const q = questions[qIndex];
+
+      // 若目前空格還沒填，搖晃鍵盤提醒
+      if (userInputs[activeSlot] === '') {
+        SoundFX.wrong();
+        const pad = document.getElementById('mini-keypad');
+        if (pad) {
+          pad.style.animation = 'none';
+          void pad.offsetWidth;
+          pad.style.animation = 'shakeSide 0.4s ease';
+        }
+        return;
+      }
+
+      // 若有多個空格且還有未填寫的空格，按確定時自動跳到下一個空白格！
+      const nextEmpty = userInputs.findIndex(v => v === '');
+      if (nextEmpty !== -1) {
+        SoundFX.click();
+        activeSlot = nextEmpty;
+        updateSlotsUI(false);
+        return;
+      }
+
+      // 全部空格都填滿了，檢查所有答案是否正確
+      const allCorrect = q.answers.every((ans, idx) => parseInt(userInputs[idx], 10) === ans);
+
+      if (allCorrect) {
+        feedback = 'correct';
+        totalStars += 1;
+        document.getElementById('star-count').textContent = totalStars;
+        SoundFX.success();
+        Confetti.launch();
+      } else {
+        feedback = 'wrong';
+        // 自動把游標移到第一個填錯的空格方便修改
+        const firstWrong = q.answers.findIndex((ans, idx) => parseInt(userInputs[idx], 10) !== ans);
+        if (firstWrong !== -1) activeSlot = firstWrong;
+        SoundFX.wrong();
+      }
+      updateSlotsUI(true);
+    }
+
+    function goNext() {
+      SoundFX.click();
+      if (qIndex < TOTAL_QUESTIONS - 1) {
+        qIndex += 1;
+        initQuestionState();
+        renderScreen();
+      } else {
+        showResult = true;
+        SoundFX.success();
+        Confetti.launch();
+        renderScreen();
+      }
+    }
+
+    // 支援電腦實體鍵盤輸入
+    window.addEventListener('keydown', (e) => {
+      if (!currentMode || showResult) return;
+      if (e.key >= '0' && e.key <= '9') {
+        pressDigit(parseInt(e.key, 10));
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        clearDigit();
+      } else if (e.key === 'Enter') {
+        if (feedback === 'correct') goNext();
+        else handleConfirm();
+      }
+    });
+
+    // 初始化首頁
+    renderScreen();
+  </script>
+</body>
+</html>
