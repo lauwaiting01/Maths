@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>小兔跳跳：加與減的關係 (1-20)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+      background-color: #FFFDF5;
+      color: #4A3F35;
+    }
+
+    /* 可愛數字填空框 */
+    .blank-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.6rem;
+      height: 2.35rem;
+      padding: 0 0.35rem;
+      border-radius: 0.75rem;
+      border: 3px solid #CBD5E1;
+      background-color: #FFFFFF;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #334155;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      position: relative;
+    }
+    @media (min-width: 640px) {
+      .blank-box {
+        min-width: 3.3rem;
+        height: 2.85rem;
+        font-size: 1.65rem;
+      }
+    }
+
+    .blank-box.active {
+      border-color: #FF8BA7;
+      background-color: #FFF0F5;
+      box-shadow: 0 0 0 4px rgba(255, 139, 167, 0.3), 0 4px 10px rgba(255, 139, 167, 0.25);
+      transform: scale(1.07);
+    }
+
+    .blank-box.active::after {
+      content: "";
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background-color: #FF5D8F;
+      margin-left: 2px;
+      animation: blinkCursor 0.9s infinite;
+    }
+
+    .blank-box.has-val.active::after {
+      display: none;
+    }
+
+    .blank-box.correct {
+      border-color: #22C55E;
+      background-color: #DCFCE7;
+      color: #15803D;
+    }
+
+    .blank-box.wrong {
+      border-color: #EF4444;
+      background-color: #FEE2E2;
+      color: #B91C1C;
+      animation: shakeBox 0.4s ease-in-out;
+    }
+
+    @keyframes blinkCursor {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    @keyframes shakeBox {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* 3D 立體按鍵手感 */
+    .keypad-btn {
+      border-radius: 1rem;
+      font-weight: 800;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .keypad-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.15) !important;
+    }
+
+    .num-btn {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+      border: 2px solid #E2E8F0;
+      box-shadow: 0 4px 0 #CBD5E1;
+      color: #334155;
+      font-size: clamp(1.3rem, 3.5vh, 1.85rem);
+    }
+    .num-btn:hover {
+      background: #F1F5F9;
+    }
+
+    .action-clear {
+      background: linear-gradient(180deg, #FFE4E6 0%, #FECDD3 100%);
+      border: 2px solid #FDA4AF;
+      box-shadow: 0 4px 0 #FB7185;
+      color: #BE123C;
+    }
+
+    .action-next {
+      background: linear-gradient(180deg, #E0F2FE 0%, #BAE6FD 100%);
+      border: 2px solid #7DD3FC;
+      box-shadow: 0 4px 0 #38BDF8;
+      color: #0369A1;
+    }
+
+    .action-submit {
+      background: linear-gradient(180deg, #86EFAC 0%, #4ADE80 100%);
+      border: 2px solid #22C55E;
+      box-shadow: 0 5px 0 #16A34A;
+      color: #064E3B;
+    }
+
+    /* 愛心彈跳動畫 */
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.45) rotate(-8deg); }
+      70% { transform: scale(0.9) rotate(6deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .heart-pop {
+      animation: heartPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 飄浮星星粒子 */
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.4) rotate(25deg); }
+    }
+    .star-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 60;
+      animation: floatUp 0.9s ease-out forwards;
+    }
+
+    /* 數線格子高亮 */
+    .track-cell {
+      transition: background-color 0.25s ease, transform 0.25s ease;
+    }
+    .track-cell.start-cell {
+      background-color: #BAE6FD !important;
+      color: #0369A1 !important;
+      font-weight: 900;
+    }
+    .track-cell.end-cell {
+      background-color: #FED7AA !important;
+      color: #C2410C !important;
+      font-weight: 900;
+    }
+    .track-cell.path-cell {
+      background-color: #FEF08A !important;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-[100dvh] w-full overflow-hidden select-none">
+
+  <!-- ==================== 上方 2/3 螢幕：題目與視覺互動區 ==================== -->
+  <main id="top-section" class="h-[66.67dvh] w-full flex flex-col justify-between px-3 pt-2 pb-1.5 sm:px-6 sm:pt-3 sm:pb-2 bg-gradient-to-b from-[#FFF9DB] via-[#FFFDF5] to-[#F0F9FF] relative overflow-hidden">
+    
+    <!-- 頂部狀態列：可愛標題 + 愛心計分板 + 音效開關 -->
+    <header class="flex items-center justify-between gap-2 shrink-0">
+      <div class="flex items-center gap-2 bg-white/90 px-3 py-1 rounded-full shadow-sm border-2 border-[#FDE68A]">
+        <!-- 小兔子頭像 SVG -->
+        <svg class="w-7 h-7 sm:w-8 sm:h-8 shrink-0" viewBox="0 0 64 64" fill="none">
+          <ellipse cx="22" cy="16" rx="6" ry="14" transform="rotate(-10 22 16)" fill="#FFF" stroke="#F472B6" stroke-width="3"/>
+          <ellipse cx="22" cy="17" rx="3" ry="9" transform="rotate(-10 22 17)" fill="#FBCFE8"/>
+          <ellipse cx="42" cy="16" rx="6" ry="14" transform="rotate(10 42 16)" fill="#FFF" stroke="#F472B6" stroke-width="3"/>
+          <ellipse cx="42" cy="17" rx="3" ry="9" transform="rotate(10 42 17)" fill="#FBCFE8"/>
+          <circle cx="32" cy="38" r="18" fill="#FFF" stroke="#F472B6" stroke-width="3"/>
+          <circle cx="25" cy="35" r="2.5" fill="#334155"/>
+          <circle cx="39" cy="35" r="2.5" fill="#334155"/>
+          <ellipse cx="32" cy="40" rx="3" ry="2" fill="#FB7185"/>
+          <path d="M28 44 Q32 47 36 44" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="20" cy="41" r="3" fill="#FBCFE8" opacity="0.8"/>
+          <circle cx="44" cy="41" r="3" fill="#FBCFE8" opacity="0.8"/>
+        </svg>
+        <div>
+          <h1 class="text-sm sm:text-lg font-black text-[#7C2D12] leading-tight tracking-wide">加與減的關係</h1>
+          <p class="text-[10px] sm:text-xs text-[#9A3412] font-bold hidden xs:block">第 <span id="question-count">1</span> 題</p>
+        </div>
+      </div>
+
+      <!-- 愛心計分顯示區 -->
+      <div class="flex items-center gap-2">
+        <div id="hearts-container" class="flex items-center gap-1 bg-white/95 px-3 py-1 rounded-full shadow-sm border-2 border-[#FECDD3]">
+          <div id="hearts-icons" class="flex items-center gap-0.5 text-lg sm:text-xl"></div>
+          <span class="ml-1 text-sm sm:text-base font-black text-[#E11D48] bg-[#FFE4E6] px-2 py-0.5 rounded-full">
+            × <span id="heart-score">3</span>
+          </span>
+        </div>
+
+        <!-- 音效開關按鈕 -->
+        <button id="sound-toggle" type="button" aria-label="切換音效" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-[#BAE6FD] shadow-sm flex items-center justify-center text-lg active:scale-95 transition">
+          🔊
+        </button>
+      </div>
+    </header>
+
+    <!-- 中間：1 到 20 數線格與弧形加減箭頭 SVG 區 -->
+    <section class="w-full max-w-4xl mx-auto my-auto bg-white/95 rounded-2xl border-2 border-[#FDE047] shadow-sm px-2 py-1.5 sm:px-4 sm:py-2 flex flex-col justify-center shrink-0">
+      <div class="relative w-full" id="number-track-wrapper">
+        <!-- SVG 覆蓋層：繪製上方藍色加法弧線、下方橘紅色減法弧線、以及小兔子跳躍指示 -->
+        <svg id="track-svg" class="w-full h-[112px] sm:h-[138px] overflow-visible" viewBox="0 0 1000 140" preserveAspectRatio="none">
+          <defs>
+            <marker id="arrow-blue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#0284C7" />
+            </marker>
+            <marker id="arrow-orange" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#EA580C" />
+            </marker>
+          </defs>
+
+          <!-- 上方藍色加法弧形箭頭 -->
+          <path id="top-arc" d="" fill="none" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arrow-blue)" />
+          <!-- 上方標籤膠囊與文字 (+ C) -->
+          <g id="top-label-group">
+            <rect id="top-label-bg" x="0" y="0" width="68" height="26" rx="13" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2" />
+            <text id="top-label-text" x="0" y="0" text-anchor="middle" dominant-baseline="central" fill="#0369A1" font-size="18" font-weight="900">+ 6</text>
+          </g>
+
+          <!-- 1-20 數字格子群組 (由 JS 動態生成，確保與弧線座標 100% 精準對齊) -->
+          <g id="cells-group"></g>
+
+          <!-- 下方橘紅色減法弧形箭頭 -->
+          <path id="bottom-arc" d="" fill="none" stroke="#EA580C" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arrow-orange)" />
+          <!-- 下方標籤膠囊與文字 (- C) -->
+          <g id="bottom-label-group">
+            <rect id="bottom-label-bg" x="0" y="0" width="68" height="26" rx="13" fill="#FFEDD5" stroke="#FB923C" stroke-width="2" />
+            <text id="bottom-label-text" x="0" y="0" text-anchor="middle" dominant-baseline="central" fill="#C2410C" font-size="18" font-weight="900">− 6</text>
+          </g>
+
+          <!-- 可愛小跳躍球/小兔標記 (在講解動畫時移動) -->
+          <g id="bunny-marker" style="display: none;">
+            <circle cx="0" cy="0" r="11" fill="#F43F5E" stroke="#FFF" stroke-width="2.5" />
+            <text x="0" y="1" text-anchor="middle" dominant-baseline="central" font-size="12">🐰</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 下半部：左側「成對加減算式填空」 + 右側「雙向關係圖填空」 -->
+    <section class="w-full max-w-4xl mx-auto grid grid-cols-12 gap-2 sm:gap-4 items-center flex-1 min-h-0 py-0.5">
+      
+      <!-- 左側 7 欄：成對加減算式卡片 -->
+      <div class="col-span-7 h-full max-h-[155px] bg-white/95 rounded-2xl border-2 border-[#BAE6FD] shadow-sm px-2.5 py-2 sm:px-5 sm:py-3 flex flex-col justify-center gap-2 sm:gap-3">
+        <!-- 第一行：加法算式 A + [ ] = [ ] -->
+        <div class="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 text-xl sm:text-3xl font-black text-[#1E293B]">
+          <span id="eq-add-a" class="min-w-[2rem] text-center text-[#0284C7]">9</span>
+          <span class="text-[#0284C7]">+</span>
+          <button type="button" data-slot="0" class="blank-box" id="slot-0"></button>
+          <span class="text-[#64748B]">=</span>
+          <button type="button" data-slot="1" class="blank-box" id="slot-1"></button>
+        </div>
+
+        <!-- 第二行：減法算式 [ ] - C = [ ] -->
+        <div class="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2.5 text-xl sm:text-3xl font-black text-[#1E293B] sm:pl-6">
+          <button type="button" data-slot="2" class="blank-box" id="slot-2"></button>
+          <span class="text-[#EA580C]">−</span>
+          <span id="eq-sub-c" class="min-w-[2rem] text-center text-[#EA580C]">6</span>
+          <span class="text-[#64748B]">=</span>
+          <button type="button" data-slot="3" class="blank-box" id="slot-3"></button>
+        </div>
+      </div>
+
+      <!-- 右側 5 欄：雙向關係圖卡片 (參考圖片右下角設計) -->
+      <div class="col-span-5 h-full max-h-[155px] bg-white/95 rounded-2xl border-2 border-[#FED7AA] shadow-sm px-2 py-1.5 sm:px-4 sm:py-2 flex flex-col items-center justify-between relative">
+        
+        <!-- 上方藍色加法填空： + [ ] -->
+        <div class="flex items-center gap-1 z-10">
+          <span class="text-lg sm:text-2xl font-black text-[#0284C7]">+</span>
+          <button type="button" data-slot="4" class="blank-box !min-w-[2.3rem] !h-[2.05rem] sm:!min-w-[2.9rem] sm:!h-[2.45rem] !text-lg sm:!text-2xl" id="slot-4"></button>
+        </div>
+
+        <!-- 中間：起點數字 <--- 雙弧箭頭 ---> 終點數字 -->
+        <div class="w-full flex items-center justify-between px-1 sm:px-3 my-0.5 relative">
+          <span id="diag-left-num" class="text-xl sm:text-3xl font-black text-[#0369A1] bg-[#E0F2FE] px-2.5 py-0.5 rounded-xl border border-[#7DD3FC]">9</span>
+          
+          <!-- 雙向弧形箭頭 SVG -->
+          <svg class="flex-1 h-9 sm:h-11 mx-1 overflow-visible" viewBox="0 0 100 44" preserveAspectRatio="none">
+            <defs>
+              <marker id="mini-blue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#0284C7" />
+              </marker>
+              <marker id="mini-orange" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#EA580C" />
+              </marker>
+            </defs>
+            <!-- 藍弧往右 -->
+            <path d="M 6 15 Q 50 1 92 15" fill="none" stroke="#0284C7" stroke-width="3" stroke-linecap="round" marker-end="url(#mini-blue)" />
+            <!-- 橘弧往左 -->
+            <path d="M 94 29 Q 50 43 8 29" fill="none" stroke="#EA580C" stroke-width="3" stroke-linecap="round" marker-end="url(#mini-orange)" />
+          </svg>
+
+          <span id="diag-right-num" class="text-xl sm:text-3xl font-black text-[#C2410C] bg-[#FFEDD5] px-2.5 py-0.5 rounded-xl border border-[#FDBA74]">15</span>
+        </div>
+
+        <!-- 下方橘紅色減法填空： - [ ] -->
+        <div class="flex items-center gap-1 z-10">
+          <span class="text-lg sm:text-2xl font-black text-[#EA580C]">−</span>
+          <button type="button" data-slot="5" class="blank-box !min-w-[2.3rem] !h-[2.05rem] sm:!min-w-[2.9rem] sm:!h-[2.45rem] !text-lg sm:!text-2xl" id="slot-5"></button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 回饋橫幅 (答對慶祝 / 答錯講解提示浮層，不遮擋操作鍵盤) -->
+    <div id="feedback-banner" class="hidden absolute inset-x-3 bottom-2 z-30 max-w-2xl mx-auto rounded-2xl px-4 py-2.5 shadow-lg border-2 flex items-center justify-between gap-3 transition-all">
+      <div class="flex items-center gap-2.5">
+        <span id="feedback-emoji" class="text-2xl sm:text-3xl">🎉</span>
+        <div>
+          <p id="feedback-title" class="font-black text-base sm:text-lg leading-tight">太棒了！全部答對！</p>
+          <p id="feedback-desc" class="text-xs sm:text-sm font-bold opacity-90">獲得 1 顆愛心 ❤️</p>
+        </div>
+      </div>
+      <button id="next-question-btn" type="button" class="shrink-0 bg-white hover:bg-amber-50 text-slate-800 font-black px-4 py-2 rounded-xl shadow border-2 border-amber-300 text-sm sm:text-base active:scale-95 transition">
+        下一題 ➔
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ==================== 下方 1/3 螢幕：兒童友善大型數字鍵盤操作區 ==================== -->
+  <footer id="bottom-keypad" class="h-[33.33dvh] w-full bg-[#E0F2FE] border-t-4 border-[#7DD3FC] px-3 py-2 sm:px-6 sm:py-2.5 flex flex-col justify-center shadow-[0_-4px_15px_rgba(0,0,0,0.05)] z-20">
+    <div class="w-full max-w-3xl mx-auto h-full grid grid-cols-6 grid-rows-2 gap-2 sm:gap-3">
+      
+      <!-- 第一列：數字 1, 2, 3, 4, 5 + 退格清除鍵 -->
+      <button type="button" class="keypad-btn num-btn" data-num="1">1</button>
+      <button type="button" class="keypad-btn num-btn" data-num="2">2</button>
+      <button type="button" class="keypad-btn num-btn" data-num="3">3</button>
+      <button type="button" class="keypad-btn num-btn" data-num="4">4</button>
+      <button type="button" class="keypad-btn num-btn" data-num="5">5</button>
+      <button type="button" id="btn-backspace" class="keypad-btn action-clear flex-col leading-none">
+        <span class="text-xl sm:text-2xl">⌫</span>
+        <span class="text-[11px] sm:text-xs mt-0.5">清除</span>
+      </button>
+
+      <!-- 第二列：數字 6, 7, 8, 9, 0 + 確定送出鍵 -->
+      <button type="button" class="keypad-btn num-btn" data-num="6">6</button>
+      <button type="button" class="keypad-btn num-btn" data-num="7">7</button>
+      <button type="button" class="keypad-btn num-btn" data-num="8">8</button>
+      <button type="button" class="keypad-btn num-btn" data-num="9">9</button>
+      <button type="button" class="keypad-btn num-btn" data-num="0">0</button>
+      <button type="button" id="btn-submit" class="keypad-btn action-submit flex-col leading-none">
+        <span class="text-xl sm:text-2xl">✓</span>
+        <span class="text-xs sm:text-sm mt-0.5">確定</span>
+      </button>
+
+    </div>
+  </footer>
+
+  <!-- ==================== 愛心歸零友善鼓勵彈窗 ==================== -->
+  <div id="gameover-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border-4 border-[#FDE047] max-w-sm w-full p-6 text-center shadow-2xl transform transition-all">
+      <div class="text-6xl mb-3">🐰💖</div>
+      <h2 class="text-2xl font-black text-[#7C2D12] mb-2">小兔子幫你加油！</h2>
+      <p class="text-slate-600 font-bold text-base mb-5 leading-relaxed">
+        沒關係，多練習就會越來越厲害！<br/>已經幫你把愛心補滿囉，我們繼續玩吧！
+      </p>
+      <button id="restart-hearts-btn" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#FF8BA7] to-[#FB7185] text-white font-black text-xl shadow-[0_5px_0_#E11D48] active:translate-y-1 transition">
+        領取 3 顆愛心繼續挑戰！
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * 小兔跳跳：加與減的關係 (1-20)
+     * 專為小學一年級設計的互動數學遊戲邏輯
+     */
+    (function () {
+      // ==================== 1. Web Audio API 可愛音效合成器 ====================
+      class CuteSoundFX {
+        constructor() {
+          this.ctx = null;
+          this.enabled = true;
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        }
+
+        playTone(freq, type = 'sine', duration = 0.12, startTimeOffset = 0, vol = 0.18) {
+          if (!this.enabled) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime + startTimeOffset;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.exponentialRampToValueAtTime(vol, now + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + duration + 0.02);
+        }
+
+        // 點擊數字鍵：清脆水滴音
+        tap() {
+          this.playTone(580, 'sine', 0.09, 0, 0.15);
+        }
+
+        // 清除鍵：輕柔下降音
+        clear() {
+          this.playTone(360, 'triangle', 0.1, 0, 0.14);
+        }
+
+        // 切換空格：小跳音
+        select() {
+          this.playTone(480, 'sine', 0.07, 0, 0.1);
+        }
+
+        // 答對慶祝：歡快大三和弦上行 (C5 - E5 - G5 - C6)
+        win() {
+          this.playTone(523.25, 'triangle', 0.14, 0.00, 0.2);
+          this.playTone(659.25, 'triangle', 0.14, 0.10, 0.2);
+          this.playTone(783.99, 'triangle', 0.14, 0.20, 0.2);
+          this.playTone(1046.50, 'sine', 0.35, 0.30, 0.25);
+        }
+
+        // 答錯提示：溫和低音 (不刺耳，避免驚嚇小一學生)
+        wrong() {
+          this.playTone(310, 'triangle', 0.18, 0.00, 0.18);
+          this.playTone(260, 'triangle', 0.26, 0.16, 0.18);
+        }
+      }
+
+      const sfx = new CuteSoundFX();
+
+      // ==================== 2. 遊戲狀態管理 ====================
+      const INITIAL_HEARTS = 3;
+      const MAX_DISPLAY_HEARTS = 8;
+
+      const state = {
+        hearts: INITIAL_HEARTS,
+        questionNumber: 1,
+        // 數學參數：1 <= A < B <= 20, C = B - A
+        A: 9,
+        B: 15,
+        C: 6,
+        // 6 個空格的正確答案：
+        // slot 0: A + [C] = B
+        // slot 1: A + C = [B]
+        // slot 2: [B] - C = A
+        // slot 3: B - C = [A]
+        // slot 4: 右圖上方 + [C]
+        // slot 5: 右圖下方 - [C]
+        answers: [],
+        userInputs: ['', '', '', '', '', ''],
+        activeSlot: 0,
+        isAnswered: false,
+        lastPairKey: ''
+      };
+
+      // ==================== 3. DOM 元素快取 ====================
+      const elHeartsIcons = document.getElementById('hearts-icons');
+      const elHeartScore = document.getElementById('heart-score');
+      const elQuestionCount = document.getElementById('question-count');
+      const elSoundToggle = document.getElementById('sound-toggle');
+
+      // 數線 SVG 元素
+      const elCellsGroup = document.getElementById('cells-group');
+      const elTopArc = document.getElementById('top-arc');
+      const elTopLabelGroup = document.getElementById('top-label-group');
+      const elTopLabelBg = document.getElementById('top-label-bg');
+      const elTopLabelText = document.getElementById('top-label-text');
+
+      const elBottomArc = document.getElementById('bottom-arc');
+      const elBottomLabelGroup = document.getElementById('bottom-label-group');
+      const elBottomLabelBg = document.getElementById('bottom-label-bg');
+      const elBottomLabelText = document.getElementById('bottom-label-text');
+      const elBunnyMarker = document.getElementById('bunny-marker');
+
+      // 算式與關係圖元素
+      const elEqAddA = document.getElementById('eq-add-a');
+      const elEqSubC = document.getElementById('eq-sub-c');
+      const elDiagLeft = document.getElementById('diag-left-num');
+      const elDiagRight = document.getElementById('diag-right-num');
+      const slotButtons = Array.from(document.querySelectorAll('.blank-box'));
+
+      // 回饋橫幅與彈窗
+      const elFeedbackBanner = document.getElementById('feedback-banner');
+      const elFeedbackEmoji = document.getElementById('feedback-emoji');
+      const elFeedbackTitle = document.getElementById('feedback-title');
+      const elFeedbackDesc = document.getElementById('feedback-desc');
+      const elNextQuestionBtn = document.getElementById('next-question-btn');
+
+      const elGameoverModal = document.getElementById('gameover-modal');
+      const elRestartHeartsBtn = document.getElementById('restart-hearts-btn');
+
+      // ==================== 4. 繪製 1-20 數線與弧形箭頭 ====================
+      const SVG_WIDTH = 1000;
+      const TRACK_PADDING_X = 16;
+      const TRACK_WIDTH = SVG_WIDTH - TRACK_PADDING_X * 2;
+      const CELL_W = TRACK_WIDTH / 20;
+      const CELL_Y = 48;
+      const CELL_H = 42;
+
+      // 初始化 1 到 20 格子
+      function initNumberTrackCells() {
+        elCellsGroup.innerHTML = '';
+        for (let i = 1; i <= 20; i++) {
+          const x = TRACK_PADDING_X + (i - 1) * CELL_W;
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', x);
+          rect.setAttribute('y', CELL_Y);
+          rect.setAttribute('width', CELL_W);
+          rect.setAttribute('height', CELL_H);
+          rect.setAttribute('fill', '#FEF9C3');
+          rect.setAttribute('stroke', '#CA8A04');
+          rect.setAttribute('stroke-width', '2');
+          rect.setAttribute('id', `track-rect-${i}`);
+
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', x + CELL_W / 2);
+          text.setAttribute('y', CELL_Y + CELL_H / 2 + 1);
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('dominant-baseline', 'central');
+          text.setAttribute('font-size', '21');
+          text.setAttribute('font-weight', '800');
+          text.setAttribute('fill', '#422006');
+          text.setAttribute('id', `track-text-${i}`);
+          text.textContent = i;
+
+          g.appendChild(rect);
+          g.appendChild(text);
+          elCellsGroup.appendChild(g);
+        }
+      }
+
+      // 取得數字 n (1..20) 格子的中心 X 座標
+      function getCellCenterX(n) {
+        return TRACK_PADDING_X + (n - 0.5) * CELL_W;
+      }
+
+      // 根據當前 A, B, C 更新數線高亮與上下弧線
+      function renderNumberTrack(revealJumpNumber = true) {
+        const { A, B, C } = state;
+
+        // 重設所有格子顏色
+        for (let i = 1; i <= 20; i++) {
+          const rect = document.getElementById(`track-rect-${i}`);
+          const text = document.getElementById(`track-text-${i}`);
+          if (i === A) {
+            rect.setAttribute('fill', '#BAE6FD');
+            text.setAttribute('fill', '#0369A1');
+          } else if (i === B) {
+            rect.setAttribute('fill', '#FED7AA');
+            text.setAttribute('fill', '#C2410C');
+          } else if (i > A && i < B) {
+            rect.setAttribute('fill', '#FEF08A');
+            text.setAttribute('fill', '#713F12');
+          } else {
+            rect.setAttribute('fill', '#FEFCE8');
+            text.setAttribute('fill', '#57534E');
+          }
+        }
+
+        const startX = getCellCenterX(A);
+        const endX = getCellCenterX(B);
+        const midX = (startX + endX) / 2;
+        const span = endX - startX;
+
+        // 弧度高度依跨度動態微調，保持美觀不超出 SVG
+        const arcLift = Math.min(36, Math.max(22, span * 0.14));
+
+        // 1. 上方藍色加法弧線 (A -> B)
+        const topStartY = CELL_Y - 3;
+        const topCtrlY = topStartY - arcLift * 1.45;
+        elTopArc.setAttribute('d', `M ${startX} ${topStartY} Q ${midX} ${topCtrlY} ${endX} ${topStartY}`);
+
+        // 上方標籤 (+ C)
+        const topPeakY = (topStartY + topCtrlY) / 2;
+        const topLabelY = Math.max(15, topPeakY - 6);
+        elTopLabelBg.setAttribute('x', midX - 34);
+        elTopLabelBg.setAttribute('y', topLabelY - 13);
+        elTopLabelText.setAttribute('x', midX);
+        elTopLabelText.setAttribute('y', topLabelY);
+        elTopLabelText.textContent = `+ ${C}`;
+
+        // 2. 下方橘紅色減法弧線 (B -> A)
+        const botStartY = CELL_Y + CELL_H + 3;
+        const botCtrlY = botStartY + arcLift * 1.45;
+        elBottomArc.setAttribute('d', `M ${endX} ${botStartY} Q ${midX} ${botCtrlY} ${startX} ${botStartY}`);
+
+        // 下方標籤 (- C)
+        const botPeakY = (botStartY + botCtrlY) / 2;
+        const botLabelY = Math.min(125, botPeakY + 6);
+        elBottomLabelBg.setAttribute('x', midX - 34);
+        elBottomLabelBg.setAttribute('y', botLabelY - 13);
+        elBottomLabelText.setAttribute('x', midX);
+        elBottomLabelText.setAttribute('y', botLabelY);
+        elBottomLabelText.textContent = `− ${C}`;
+      }
+
+      // 講解動畫：讓小兔子沿著數線一格一格跳躍
+      function playBunnyJumpExplanation() {
+        const { A, B } = state;
+        elBunnyMarker.style.display = 'block';
+        let current = A;
+
+        const stepInterval = setInterval(() => {
+          const cx = getCellCenterX(current);
+          elBunnyMarker.setAttribute('transform', `translate(${cx}, ${CELL_Y - 10})`);
+          if (current >= B) {
+            clearInterval(stepInterval);
+            setTimeout(() => {
+              elBunnyMarker.style.display = 'none';
+            }, 1200);
+          }
+          current++;
+        }, 220);
+      }
+
+      // ==================== 5. 出題與畫面更新邏輯 ====================
+      function generateNewQuestion() {
+        state.isAnswered = false;
+        elFeedbackBanner.classList.add('hidden');
+        elBunnyMarker.style.display = 'none';
+
+        // 產生符合 1 <= A < B <= 20 且跨度 C >= 2 (讓數線跳躍更明顯) 的題目
+        let A, B, C, pairKey;
+        let safety = 0;
+        do {
+          // 起點 A 介於 1 到 16
+          A = Math.floor(Math.random() * 16) + 1;
+          // 跨度 C 介於 2 到 min(9, 20 - A)，避免跨度過小或過大
+          const maxC = Math.min(9, 20 - A);
+          C = Math.floor(Math.random() * (maxC - 1)) + 2;
+          B = A + C;
+          pairKey = `${A}-${B}`;
+          safety++;
+        } while (pairKey === state.lastPairKey && safety < 20);
+
+        state.lastPairKey = pairKey;
+        state.A = A;
+        state.B = B;
+        state.C = C;
+
+        // 對應 6 個空格的正確答案
+        state.answers = [C, B, B, A, C, C];
+        state.userInputs = ['', '', '', '', '', ''];
+        state.activeSlot = 0;
+
+        // 更新題目文字
+        elQuestionCount.textContent = state.questionNumber;
+        elEqAddA.textContent = A;
+        elEqSubC.textContent = C;
+        elDiagLeft.textContent = A;
+        elDiagRight.textContent = B;
+
+        // 重設所有輸入框樣式
+        slotButtons.forEach((btn) => {
+          btn.textContent = '';
+          btn.classList.remove('correct', 'wrong', 'has-val', 'active');
+        });
+
+        renderNumberTrack();
+        updateActiveSlotUI();
+      }
+
+      function updateActiveSlotUI() {
+        slotButtons.forEach((btn, idx) => {
+          const val = state.userInputs[idx];
+          btn.textContent = val;
+          btn.classList.toggle('has-val', val.length > 0);
+          if (!state.isAnswered && idx === state.activeSlot) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
+
+      // 更新上方愛心顯示列
+      function renderHearts(animateType = null) {
+        elHeartScore.textContent = state.hearts;
+        elHeartsIcons.innerHTML = '';
+
+        const displayCount = Math.min(state.hearts, MAX_DISPLAY_HEARTS);
+        if (state.hearts === 0) {
+          const broken = document.createElement('span');
+          broken.textContent = '🤍';
+          elHeartsIcons.appendChild(broken);
+        } else {
+          for (let i = 0; i < displayCount; i++) {
+            const span = document.createElement('span');
+            span.textContent = '❤️';
+            if (animateType === 'gain' && i === displayCount - 1) {
+              span.classList.add('heart-pop');
+            }
+            elHeartsIcons.appendChild(span);
+          }
+          if (state.hearts > MAX_DISPLAY_HEARTS) {
+            const plus = document.createElement('span');
+            plus.className = 'text-xs font-black text-rose-500 ml-0.5';
+            plus.textContent = `+${state.hearts - MAX_DISPLAY_HEARTS}`;
+            elHeartsIcons.appendChild(plus);
+          }
+        }
+      }
+
+      // 噴發可愛星星特效
+      function spawnCelebrationStars() {
+        const emojis = ['⭐', '🌟', '✨', '💖', '🎉'];
+        for (let i = 0; i < 14; i++) {
+          const el = document.createElement('div');
+          el.className = 'star-particle text-2xl sm:text-3xl';
+          el.textContent = emojis[i % emojis.length];
+          el.style.left = `${15 + Math.random() * 70}vw`;
+          el.style.top = `${25 + Math.random() * 35}vh`;
+          el.style.animationDelay = `${Math.random() * 0.25}s`;
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 1100);
+        }
+      }
+
+      // ==================== 6. 數字鍵盤與填寫互動邏輯 ====================
+      function handleNumberInput(digit) {
+        if (state.isAnswered) return;
+        sfx.tap();
+
+        const idx = state.activeSlot;
+        let currentStr = state.userInputs[idx];
+
+        // 限制最多輸入兩位數 (因為範圍是 1-20)
+        if (currentStr.length >= 2) {
+          currentStr = digit;
+        } else {
+          // 避免前導零如 "05"
+          currentStr = currentStr === '0' ? digit : currentStr + digit;
+        }
+
+        state.userInputs[idx] = currentStr;
+        updateActiveSlotUI();
+
+        // 智慧自動跳格：
+        // 1. 若輸入的數字大於 2（例如 3~9），在 1-20 範圍內不可能再接第二位數，自動跳到下一個未填空格！
+        // 2. 若已經輸入兩位數（例如 15），也自動跳到下一個未填空格！
+        const numVal = parseInt(currentStr, 10);
+        if (currentStr.length === 2 || (currentStr.length === 1 && numVal >= 3)) {
+          moveToNextEmptySlot();
+        }
+      }
+
+      function moveToNextEmptySlot() {
+        // 從當前格往後找下一個空格
+        for (let offset = 1; offset <= 6; offset++) {
+          const candidate = (state.activeSlot + offset) % 6;
+          if (state.userInputs[candidate] === '') {
+            state.activeSlot = candidate;
+            updateActiveSlotUI();
+            return;
+          }
+        }
+      }
+
+      function handleBackspace() {
+        if (state.isAnswered) return;
+        sfx.clear();
+
+        const idx = state.activeSlot;
+        if (state.userInputs[idx].length > 0) {
+          state.userInputs[idx] = state.userInputs[idx].slice(0, -1);
+        } else {
+          // 如果當前格已經是空的，退回上一格並清除
+          const prev = (idx + 5) % 6;
+          state.activeSlot = prev;
+          state.userInputs[prev] = state.userInputs[prev].slice(0, -1);
+        }
+        updateActiveSlotUI();
+      }
+
+      function handleSubmit() {
+        if (state.isAnswered) {
+          // 若已經批改完成，按確定鍵直接進入下一題
+          goNextQuestion();
+          return;
+        }
+
+        // 檢查是否還有空格未填寫
+        const firstEmptyIdx = state.userInputs.findIndex((val) => val === '');
+        if (firstEmptyIdx !== -1) {
+          sfx.wrong();
+          state.activeSlot = firstEmptyIdx;
+          updateActiveSlotUI();
+          const emptyBtn = slotButtons[firstEmptyIdx];
+          emptyBtn.classList.add('wrong');
+          setTimeout(() => emptyBtn.classList.remove('wrong'), 450);
+          return;
+        }
+
+        // 全部格子都已填寫，開始批改
+        state.isAnswered = true;
+        let allCorrect = true;
+
+        slotButtons.forEach((btn, idx) => {
+          btn.classList.remove('active');
+          const userNum = parseInt(state.userInputs[idx], 10);
+          const correctNum = state.answers[idx];
+
+          if (userNum === correctNum) {
+            btn.classList.add('correct');
+          } else {
+            allCorrect = false;
+            btn.classList.add('wrong');
+            // 溫柔顯示正確答案，讓小一學生立刻對照學習
+            btn.innerHTML = `<span class="line-through text-xs opacity-60 mr-1">${userNum}</span><span class="text-emerald-700">${correctNum}</span>`;
+          }
+        });
+
+        if (allCorrect) {
+          // 全對：加 1 顆愛心 + 慶祝音效與星星
+          sfx.win();
+          state.hearts += 1;
+          renderHearts('gain');
+          spawnCelebrationStars();
+
+          elFeedbackBanner.className = 'absolute inset-x-3 bottom-2 z-30 max-w-2xl mx-auto rounded-2xl px-4 py-2.5 shadow-lg border-2 flex items-center justify-between gap-3 bg-[#DCFCE7] border-[#4ADE80] text-[#14532D]';
+          elFeedbackEmoji.textContent = '🎉';
+          elFeedbackTitle.textContent = '太厲害了！全部答對！';
+          elFeedbackDesc.textContent = `獲得 1 顆愛心！現在共有 ${state.hearts} 顆愛心 ❤️`;
+          elFeedbackBanner.classList.remove('hidden');
+        } else {
+          // 有錯：扣 1 顆愛心（最低 0）+ 小兔數線跳躍講解
+          sfx.wrong();
+          state.hearts = Math.max(0, state.hearts - 1);
+          renderHearts('loss');
+          playBunnyJumpExplanation();
+
+          const { A, B, C } = state;
+          elFeedbackBanner.className = 'absolute inset-x-3 bottom-2 z-30 max-w-2xl mx-auto rounded-2xl px-4 py-2.5 shadow-lg border-2 flex items-center justify-between gap-3 bg-[#FFEDD5] border-[#FB923C] text-[#7C2D12]';
+          elFeedbackEmoji.textContent = '🐰';
+          elFeedbackTitle.textContent = '差一點點！看看綠色正確答案喔';
+          elFeedbackDesc.textContent = `從 ${A} 往右跳 ${C} 格到 ${B}（${A}+${C}=${B}），往回跳就是 ${B}−${C}=${A}！`;
+          elFeedbackBanner.classList.remove('hidden');
+
+          // 若愛心扣到 0，延遲一下顯示友善補充愛心彈窗
+          if (state.hearts === 0) {
+            setTimeout(() => {
+              elGameoverModal.classList.remove('hidden');
+            }, 1600);
+          }
+        }
+      }
+
+      function goNextQuestion() {
+        sfx.select();
+        state.questionNumber += 1;
+        generateNewQuestion();
+      }
+
+      // ==================== 7. 事件監聽綁定 ====================
+      // 點擊任意填空框切換焦點
+      slotButtons.forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          if (state.isAnswered) return;
+          sfx.select();
+          state.activeSlot = idx;
+          updateActiveSlotUI();
+        });
+      });
+
+      // 數字鍵盤點擊
+      document.querySelectorAll('.num-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          handleNumberInput(btn.dataset.num);
+        });
+      });
+
+      // 退格清除鍵
+      document.getElementById('btn-backspace').addEventListener('click', handleBackspace);
+
+      // 確定送出鍵
+      document.getElementById('btn-submit').addEventListener('click', handleSubmit);
+
+      // 下一題按鈕
+      elNextQuestionBtn.addEventListener('click', goNextQuestion);
+
+      // 愛心補滿重新繼續
+      elRestartHeartsBtn.addEventListener('click', () => {
+        sfx.win();
+        state.hearts = INITIAL_HEARTS;
+        renderHearts('gain');
+        elGameoverModal.classList.add('hidden');
+        goNextQuestion();
+      });
+
+      // 音效開關
+      elSoundToggle.addEventListener('click', () => {
+        sfx.enabled = !sfx.enabled;
+        elSoundToggle.textContent = sfx.enabled ? '🔊' : '🔇';
+        if (sfx.enabled) sfx.tap();
+      });
+
+      // 支援實體鍵盤（方便老師或家長在電腦上操作測試）
+      window.addEventListener('keydown', (e) => {
+        if (!elGameoverModal.classList.contains('hidden')) return;
+        if (e.key >= '0' && e.key <= '9') {
+          handleNumberInput(e.key);
+        } else if (e.key === 'Backspace' || e.key === 'Delete') {
+          handleBackspace();
+        } else if (e.key === 'Enter') {
+          handleSubmit();
+        } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
+          e.preventDefault();
+          if (!state.isAnswered) {
+            state.activeSlot = (state.activeSlot + 1) % 6;
+            updateActiveSlotUI();
+          }
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          if (!state.isAnswered) {
+            state.activeSlot = (state.activeSlot + 5) % 6;
+            updateActiveSlotUI();
+          }
+        }
+      });
+
+      // ==================== 8. 啟動遊戲 ====================
+      initNumberTrackCells();
+      renderHearts();
+      generateNewQuestion();
+    })();
+  </script>
+</body>
+</html>
