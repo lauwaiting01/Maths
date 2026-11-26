@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>認識100以內的數 - 小一數學闖關大挑戰</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    /* 基礎鎖定：防止平板觸控誤放大、反白或捲動 */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      touch-action: manipulation;
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+      background: linear-gradient(165deg, #fce7f3 0%, #e0f2fe 50%, #fef9c3 100%);
+    }
+
+    /* 課本同款立體草綠色數粒 (3D Isometric Cube CSS) */
+    .cube {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      background-color: #a4d639;
+      border: 1.5px solid #4d6e19;
+      flex-shrink: 0;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .cube::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 2px;
+      width: 100%;
+      height: 4.5px;
+      background-color: #c2eb63;
+      border-top: 1.5px solid #4d6e19;
+      border-left: 1.5px solid #4d6e19;
+      border-right: 1.5px solid #4d6e19;
+      transform: skewX(-45deg);
+      transform-origin: bottom left;
+    }
+
+    .cube::after {
+      content: '';
+      position: absolute;
+      top: -2.5px;
+      right: -5px;
+      width: 4.5px;
+      height: 100%;
+      background-color: #82b025;
+      border-top: 1.5px solid #4d6e19;
+      border-right: 1.5px solid #4d6e19;
+      border-bottom: 1.5px solid #4d6e19;
+      transform: skewY(-45deg);
+      transform-origin: top left;
+    }
+
+    @media (max-height: 760px) {
+      .cube { width: 18px; height: 18px; }
+      .cube::before { top: -4.5px; height: 4px; }
+      .cube::after { right: -4.5px; width: 4px; }
+    }
+
+    @media (max-width: 768px) {
+      .cube { width: 15px; height: 15px; }
+      .cube::before { top: -4px; height: 3.5px; }
+      .cube::after { right: -4px; width: 3.5px; }
+    }
+
+    /* 10粒一條 */
+    .ten-rod {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      padding-top: 5px;
+      padding-right: 5px;
+    }
+
+    .ten-rod .cube {
+      margin-top: -1.5px;
+    }
+
+    /* 散裝「粒」：每5粒一豎排 */
+    .ones-column {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 3px;
+      padding-top: 5px;
+      padding-right: 5px;
+    }
+
+    /* 動畫效果 */
+    @keyframes popIn {
+      0% { transform: scale(0.3) translateY(12px); opacity: 0; }
+      75% { transform: scale(1.08) translateY(-2px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .animate-pop-in {
+      animation: popIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes shakeWrong {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+    .animate-shake {
+      animation: shakeWrong 0.4s ease-in-out;
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: floatSlow 2.6s infinite ease-in-out;
+    }
+
+    /* 馬卡龍立體按鈕 */
+    .macaron-btn {
+      transition: all 0.12s ease;
+      box-shadow: 0 5px 0 rgba(0, 0, 0, 0.13);
+    }
+    .macaron-btn:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.13);
+    }
+    .macaron-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: translateY(2px);
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between">
+
+  <!-- ==================== 1. 開始選關畫面 (題型選擇器) ==================== -->
+  <div id="start-screen" class="fixed inset-0 z-40 bg-gradient-to-br from-pink-100 via-sky-100 to-amber-100 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div class="max-w-3xl w-full bg-white/95 backdrop-blur-md rounded-[36px] border-4 border-amber-300 shadow-2xl p-5 sm:p-8 text-center animate-pop-in">
+      
+      <!-- 可愛標題與小學生頭像 -->
+      <div class="flex flex-col items-center mb-4 sm:mb-6">
+        <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-purple-100 text-purple-800 text-xs sm:text-sm font-black mb-2">
+          <span>🏆 香港小一數學互動遊戲</span>
+          <span>•</span>
+          <span>0 至 100 以內的數</span>
+        </div>
+        <h1 class="text-2xl sm:text-4xl font-black text-slate-800 tracking-wide flex items-center justify-center gap-2">
+          <span class="animate-float inline-block">🧸</span>
+          <span>數粒闖關大挑戰</span>
+          <span class="animate-float inline-block">🌟</span>
+        </h1>
+        <p class="text-sm sm:text-base font-bold text-slate-500 mt-1">請選擇你想挑戰的遊戲題型（每回合 5 題，收集 5 顆星星！）</p>
+      </div>
+
+      <!-- 4種題型選擇卡片 (3種獨立題型 + 1種綜合大挑戰) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5">
+        
+        <!-- 題型 A：看積木選答案 -->
+        <button onclick="startGame('A')" class="macaron-btn group text-left p-4 rounded-3xl bg-gradient-to-br from-sky-100 to-sky-200 border-3 border-sky-400 hover:brightness-102 flex items-center gap-3.5">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0 group-hover:scale-110 transition">
+            👀
+          </div>
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full bg-sky-500 text-white text-xs font-black mb-1">題型一</span>
+            <h2 class="text-lg sm:text-xl font-black text-sky-950">看積木選答案</h2>
+            <p class="text-xs sm:text-sm font-bold text-sky-800/80">數一數有幾條和幾粒，選出正確數字或讀作</p>
+          </div>
+        </button>
+
+        <!-- 題型 B：聽題拿積木 -->
+        <button onclick="startGame('B')" class="macaron-btn group text-left p-4 rounded-3xl bg-gradient-to-br from-emerald-100 to-emerald-200 border-3 border-emerald-400 hover:brightness-102 flex items-center gap-3.5">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0 group-hover:scale-110 transition">
+            🧱
+          </div>
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-black mb-1">題型二</span>
+            <h2 class="text-lg sm:text-xl font-black text-emerald-950">看題目拿積木</h2>
+            <p class="text-xs sm:text-sm font-bold text-emerald-800/80">自己點擊「拿 1 條」和「拿 1 粒」拼出題目數量</p>
+          </div>
+        </button>
+
+        <!-- 題型 C：多 1 粒 / 少 1 粒 -->
+        <button onclick="startGame('C')" class="macaron-btn group text-left p-4 rounded-3xl bg-gradient-to-br from-rose-100 to-rose-200 border-3 border-rose-400 hover:brightness-102 flex items-center gap-3.5">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0 group-hover:scale-110 transition">
+            ➕➖
+          </div>
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-xs font-black mb-1">題型三</span>
+            <h2 class="text-lg sm:text-xl font-black text-rose-950">多 1 粒 / 少 1 粒</h2>
+            <p class="text-xs sm:text-sm font-bold text-rose-800/80">挑戰進位與退位（例如 29 多 1 粒、40 少 1 粒）</p>
+          </div>
+        </button>
+
+        <!-- 綜合大挑戰：三種混合 -->
+        <button onclick="startGame('MIX')" class="macaron-btn group text-left p-4 rounded-3xl bg-gradient-to-br from-amber-200 via-yellow-200 to-orange-200 border-3 border-amber-400 hover:brightness-102 flex items-center gap-3.5">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0 group-hover:scale-110 transition">
+            👑
+          </div>
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-xs font-black mb-1">綜合挑戰</span>
+            <h2 class="text-lg sm:text-xl font-black text-amber-950">三合一混合闖關</h2>
+            <p class="text-xs sm:text-sm font-bold text-amber-900/80">隨機出現以上三種題型，成為數粒小博士！</p>
+          </div>
+        </button>
+
+      </div>
+
+      <!-- 底部音效開關提示 -->
+      <div class="flex items-center justify-center gap-3 text-xs sm:text-sm font-bold text-slate-600">
+        <button onclick="toggleSound()" id="start-sound-btn" class="px-4 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center gap-1.5 transition">
+          <span>🔔 粵語語音與音效：開啟</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 2. 遊戲主畫面：上方三分之二 (展示與題目區 65vh) ==================== -->
+  <section class="h-[65dvh] w-full flex flex-col px-3 pt-2 pb-1.5 sm:px-6 sm:pt-3 max-w-6xl mx-auto">
+    
+    <!-- 頂部狀態列：返回選單 + 進度星星 + 朗讀題目 -->
+    <header class="flex items-center justify-between gap-2 mb-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-2xl shadow-sm border border-purple-100">
+      <button onclick="returnToMenu()" class="flex items-center gap-1 px-3 py-1 rounded-xl text-xs sm:text-sm font-black bg-purple-100 text-purple-900 hover:bg-purple-200 active:scale-95 transition">
+        <span>🏠</span>
+        <span>換題型</span>
+      </button>
+
+      <!-- 關卡進度與星星獎勵 -->
+      <div class="flex items-center gap-1.5 sm:gap-2 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+        <span id="q-progress-text" class="text-xs sm:text-sm font-black text-amber-900 mr-1">第 1 / 5 題</span>
+        <div id="stars-bar" class="flex items-center gap-1 text-base sm:text-xl">
+          <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button onclick="speakCurrentQuestion()" class="flex items-center gap-1 px-3 py-1 rounded-xl text-xs sm:text-sm font-black bg-emerald-400 text-white shadow-xs hover:bg-emerald-500 active:scale-95 transition">
+          <span>🔊</span>
+          <span class="hidden sm:inline">再聽一次</span>
+        </button>
+        <button onclick="toggleSound()" id="game-sound-btn" class="p-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+          🔔
+        </button>
+      </div>
+    </header>
+
+    <!-- 題目提示橫幅 + 中央積木舞台 -->
+    <div class="flex-1 min-h-0 bg-white rounded-[28px] shadow-md border-2 border-purple-100 flex flex-col items-center justify-between p-2.5 sm:p-4 relative overflow-hidden">
+      
+      <!-- 題目文字泡泡 -->
+      <div onclick="speakCurrentQuestion()" class="cursor-pointer w-full max-w-2xl bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-2 sm:py-2.5 text-center shadow-2xs flex items-center justify-center gap-2 z-10 active:scale-99 transition">
+        <span id="question-badge" class="px-2.5 py-0.5 rounded-full bg-amber-400 text-white text-xs font-black shrink-0">題型一</span>
+        <h2 id="question-text" class="text-base sm:text-2xl font-black text-slate-800 tracking-wide">
+          請數一數，下面一共有多少粒？
+        </h2>
+        <span class="text-amber-600 text-sm sm:text-base shrink-0">🔊</span>
+      </div>
+
+      <!-- 中央積木顯示區 -->
+      <div id="stage-area" class="flex-1 w-full flex items-end justify-center gap-3 sm:gap-6 py-2 px-2 overflow-hidden relative">
+        
+        <!-- 題型 B 專用：目前學生已拿出的數量提示角標 -->
+        <div id="builder-counter-pill" class="hidden absolute top-2 right-2 bg-emerald-50 border-2 border-emerald-300 px-3 py-1 rounded-2xl text-xs sm:text-sm font-black text-emerald-900 shadow-2xs">
+          目前已拿：<span id="builder-tens-count" class="text-emerald-600 text-base sm:text-lg">0</span> 條 <span id="builder-ones-count" class="text-orange-500 text-base sm:text-lg">0</span> 粒
+        </div>
+
+        <!-- 0 粒空狀態提示 -->
+        <div id="stage-empty-hint" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+          <div class="px-5 py-2.5 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 text-slate-500">
+            <span class="text-2xl">🧺</span>
+            <p id="empty-hint-text" class="text-xs sm:text-sm font-bold mt-1">目前是 0 粒（一粒也沒有）</p>
+          </div>
+        </div>
+
+        <!-- 十位區（「條」） -->
+        <div id="tens-container" class="flex items-end gap-1 sm:gap-2 min-h-[115px]"></div>
+
+        <!-- 個位區（「粒」：每 5 粒一豎排） -->
+        <div id="ones-wrapper" class="flex items-end gap-1 sm:gap-1.5 min-h-[115px]">
+          <div id="ones-col-1" class="ones-column"></div>
+          <div id="ones-col-2" class="ones-column"></div>
+        </div>
+      </div>
+
+      <!-- 溫馨回饋提示欄 (答對歡呼 / 答錯鼓勵提示) -->
+      <div id="feedback-bar" class="h-8 sm:h-9 flex items-center justify-center z-10">
+        <span id="feedback-text" class="text-xs sm:text-base font-bold text-slate-400">
+          請在下方操作區作答喔！👇
+        </span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 3. 遊戲主畫面：下方三分之一 (學生作答操作區 35vh) ==================== -->
+  <section class="h-[35dvh] w-full bg-gradient-to-b from-[#fffdf7] to-[#fef3c7] border-t-4 border-amber-200 rounded-t-[32px] shadow-[0_-6px_20px_rgba(0,0,0,0.05)] px-3 py-2.5 sm:px-6 sm:py-3.5 flex flex-col justify-center">
+    
+    <!-- 模式 A & C 作答區：4 個超大馬卡龍選擇按鈕 -->
+    <div id="choices-panel" class="max-w-4xl w-full mx-auto h-full grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 items-stretch">
+      <!-- JS 動態生成 4 個大選項按鈕 -->
+    </div>
+
+    <!-- 模式 B 作答區：動手拿積木控制器（拿1條 / 拿1粒 / 清空 / 提交答案） -->
+    <div id="builder-panel" class="hidden max-w-5xl w-full mx-auto h-full grid grid-cols-12 gap-2 sm:gap-3.5 items-stretch">
+      
+      <!-- 拿 1 條 (+10) -->
+      <div class="col-span-3 flex">
+        <button id="btn-add-ten" onclick="builderAddTen()" class="macaron-btn w-full h-full rounded-3xl bg-gradient-to-b from-emerald-200 to-emerald-300 border-2 border-emerald-400 text-emerald-950 flex flex-col items-center justify-center p-1.5">
+          <span class="text-xl sm:text-3xl font-black">➕ 1 條</span>
+          <span class="text-[11px] sm:text-xs font-bold bg-white/80 px-2 py-0.5 rounded-full text-emerald-800 mt-1">1 個 10</span>
+        </button>
+      </div>
+
+      <!-- 拿 1 粒 (+1) -->
+      <div class="col-span-3 flex">
+        <button id="btn-add-one" onclick="builderAddOne()" class="macaron-btn w-full h-full rounded-3xl bg-gradient-to-b from-amber-200 to-amber-300 border-2 border-amber-400 text-amber-950 flex flex-col items-center justify-center p-1.5">
+          <span class="text-xl sm:text-3xl font-black">➕ 1 粒</span>
+          <span class="text-[11px] sm:text-xs font-bold bg-white/80 px-2 py-0.5 rounded-full text-amber-800 mt-1">1 個 1</span>
+        </button>
+      </div>
+
+      <!-- 減少 / 清空重拿 -->
+      <div class="col-span-3 flex flex-col gap-2 justify-between">
+        <button onclick="builderUndoOne()" class="macaron-btn flex-1 rounded-2xl bg-gradient-to-b from-rose-100 to-rose-200 border-2 border-rose-300 text-rose-900 font-black text-xs sm:text-base flex items-center justify-center gap-1">
+          <span>↩️</span>
+          <span>拿走 1 個</span>
+        </button>
+        <button onclick="builderClear()" class="macaron-btn flex-1 rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200 border-2 border-slate-300 text-slate-800 font-black text-xs sm:text-base flex items-center justify-center gap-1">
+          <span>🔄</span>
+          <span>全部清空</span>
+        </button>
+      </div>
+
+      <!-- 提交檢查答案 -->
+      <div class="col-span-3 flex">
+        <button id="btn-submit-build" onclick="submitBuilderAnswer()" class="macaron-btn w-full h-full rounded-3xl bg-gradient-to-b from-sky-300 to-sky-400 border-2 border-sky-500 text-white flex flex-col items-center justify-center p-1.5 shadow-md">
+          <span class="text-2xl sm:text-3xl">✅</span>
+          <span class="text-base sm:text-xl font-black tracking-wide mt-0.5">交卷檢查</span>
+        </button>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- ==================== 4. 過關結算獎勵彈窗 ==================== -->
+  <div id="victory-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border-4 border-amber-300 rounded-[36px] shadow-2xl max-w-md w-full p-6 sm:p-8 text-center animate-pop-in">
+      <div class="text-5xl sm:text-6xl mb-2 animate-bounce">🏆</div>
+      <h2 class="text-2xl sm:text-3xl font-black text-amber-950 mb-1">太厲害了！闖關成功！</h2>
+      <p id="victory-subtitle" class="text-sm sm:text-base font-bold text-slate-600 mb-4">你成功收集了全部 5 顆星星！</p>
+      
+      <div class="bg-amber-50 border-2 border-amber-200 rounded-3xl py-3 px-4 mb-6 flex justify-center gap-2 text-3xl sm:text-4xl">
+        <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="restartSameMode()" class="macaron-btn py-3.5 rounded-2xl bg-emerald-300 border-2 border-emerald-400 text-emerald-950 font-black text-base sm:text-lg">
+          🔁 再玩一次
+        </button>
+        <button onclick="returnToMenu()" class="macaron-btn py-3.5 rounded-2xl bg-sky-300 border-2 border-sky-400 text-sky-950 font-black text-base sm:text-lg">
+          🏠 選擇其他題型
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ==================== 遊戲狀態設定 ====================
+     */
+    const TOTAL_QUESTIONS = 5;
+
+    const gameState = {
+      mode: 'MIX',          // 'A' | 'B' | 'C' | 'MIX'
+      qIndex: 0,            // 目前第幾題 (0 ~ 4)
+      stars: 0,             // 已獲得星星數
+      locked: false,        // 答對過渡期間鎖定點擊
+      soundEnabled: true,
+      currentQ: null,       // 目前題目物件
+      builderTens: 0,       // 模式 B 學生目前拿出的「條」數
+      builderOnes: 0,       // 模式 B 學生目前拿出的「粒」數
+      builderHistory: []    // 記錄拿取順序方便「拿走 1 個」
+    };
+
+    /**
+     * ==================== 數字轉香港繁體中文讀法 ====================
+     */
+    function numberToChinese(num) {
+      const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+      if (num === 0) return '零';
+      if (num === 100) return '一百';
+      if (num < 10) return digits[num];
+      const t = Math.floor(num / 10);
+      const o = num % 10;
+      if (t === 1) return o === 0 ? '十' : '十' + digits[o];
+      return digits[t] + '十' + (o === 0 ? '' : digits[o]);
+    }
+
+    /**
+     * ==================== 音效與粵語語音系統 ====================
+     */
+    let audioCtx = null;
+    function playTone(type) {
+      if (!gameState.soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'pop') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'correct') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
+          osc.frequency.setValueAtTime(783.99, now + 0.16);
+          osc.frequency.setValueAtTime(1046.5, now + 0.24);
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(175, now + 0.22);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'fanfare') {
+          osc.type = 'triangle';
+          [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((freq, i) => {
+            osc.frequency.setValueAtTime(freq, now + i * 0.11);
+          });
+          gain.gain.setValueAtTime(0.24, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.75);
+          osc.start(now);
+          osc.stop(now + 0.75);
+        }
+      } catch (e) {}
+    }
+
+    let cachedCantoneseVoice = null;
+    function loadVoices() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      cachedCantoneseVoice =
+        voices.find(v => v.lang === 'zh-HK' || v.lang === 'zh_HK') ||
+        voices.find(v => v.name.includes('Cantonese') || v.name.includes('粵語') || v.name.includes('Sin-Ji') || v.name.includes('HiuGaai') || v.name.includes('HiuMaan')) ||
+        voices.find(v => v.lang.startsWith('zh-TW')) ||
+        voices.find(v => v.lang.startsWith('zh'));
+    }
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function speakCantonese(text) {
+      if (!gameState.soundEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      if (cachedCantoneseVoice) u.voice = cachedCantoneseVoice;
+      u.lang = 'zh-HK';
+      u.rate = 0.9;
+      u.pitch = 1.08;
+      window.speechSynthesis.speak(u);
+    }
+
+    function toggleSound() {
+      gameState.soundEnabled = !gameState.soundEnabled;
+      const startBtn = document.getElementById('start-sound-btn');
+      const gameBtn = document.getElementById('game-sound-btn');
+      if (startBtn) {
+        startBtn.innerHTML = gameState.soundEnabled
+          ? '<span>🔔 粵語語音與音效：開啟</span>'
+          : '<span>🔕 粵語語音與音效：靜音</span>';
+      }
+      if (gameBtn) gameBtn.textContent = gameState.soundEnabled ? '🔔' : '🔕';
+      if (!gameState.soundEnabled && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    /**
+     * ==================== 題目生成器 (涵蓋 0-100 與重點進退位) ====================
+     */
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    // 產生 4 個不重複的數字選項（包含容易混淆的十位個位顛倒數，如 24 vs 42）
+    function generateDistractors(correct) {
+      const set = new Set([correct]);
+      const t = Math.floor(correct / 10);
+      const o = correct % 10;
+
+      // 加入十位與個位互換的誘答項（訓練位值概念）
+      if (t !== o && correct >= 10 && correct < 100) {
+        set.add(o * 10 + t);
+      }
+      // 加入相鄰數
+      if (correct + 1 <= 100) set.add(correct + 1);
+      if (correct - 1 >= 0) set.add(correct - 1);
+      if (correct + 10 <= 100) set.add(correct + 10);
+      if (correct - 10 >= 0) set.add(correct - 10);
+
+      while (set.size < 4) {
+        set.add(randInt(1, 99));
+      }
+      return shuffleArray(Array.from(set).slice(0, 4));
+    }
+
+    function createQuestion(subType) {
+      // 題型 A：看積木選數字或讀作
+      if (subType === 'A') {
+        // 偶爾出 0 或 100，其餘出 1~99
+        const pool = [0, 100, randInt(11, 99), randInt(10, 95), randInt(1, 59)];
+        const target = pool[randInt(0, pool.length - 1)];
+        const askReading = Math.random() < 0.45; // 45% 考讀作，55% 考數字
+        const nums = generateDistractors(target);
+
+        return {
+          type: 'A',
+          badge: '題型一 • 看積木',
+          displayBlocks: target,
+          answer: target,
+          promptText: askReading
+            ? '數一數，下面的積木應該「讀作」什麼？'
+            : '數一數，下面一共有多少粒？',
+          speakText: askReading
+            ? '數一數，下面的積木應該讀作什麼？'
+            : '數一數，下面一共有多少粒？',
+          options: nums.map(n => ({
+            value: n,
+            label: askReading ? numberToChinese(n) : `${n}`,
+            subLabel: askReading ? '' : `${Math.floor(n / 10)}條${n % 10}粒`
+          })),
+          hintOnWrong: `提示：有 ${Math.floor(target / 10)} 條（${Math.floor(target / 10) * 10}）和 ${target % 10} 粒，再數一次喔！`
+        };
+      }
+
+      // 題型 B：聽題 / 看提示拿積木
+      if (subType === 'B') {
+        const target = randInt(1, 99);
+        const t = Math.floor(target / 10);
+        const o = target % 10;
+        const askByPlaceValue = Math.random() < 0.5 && t > 0;
+        const cn = numberToChinese(target);
+
+        return {
+          type: 'B',
+          badge: '題型二 • 拿積木',
+          displayBlocks: 0,
+          answer: target,
+          promptText: askByPlaceValue
+            ? `請拿出「${t} 個 10 和 ${o} 個 1」的積木！`
+            : `請拿出「${target}（讀作${cn}）」粒積木！`,
+          speakText: askByPlaceValue
+            ? `請拿出 ${t} 個十 和 ${o} 個一 的積木！`
+            : `請拿出 ${cn} 粒積木！`,
+          hintOnWrong: `提示：${target} 是由 ${t} 條和 ${o} 粒組成的喔！`
+        };
+      }
+
+      // 題型 C：多 1 粒 / 少 1 粒挑戰（特別加強 19->20, 29->30 進位與 30->29, 40->39 退位）
+      const isPlus = Math.random() < 0.5;
+      let baseNum;
+      if (isPlus) {
+        // 60% 機率出「幾十九」進位題，40% 隨機 0~99
+        const boundary = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99];
+        baseNum = Math.random() < 0.6 ? boundary[randInt(0, boundary.length - 1)] : randInt(0, 99);
+      } else {
+        // 60% 機率出「整十」退位題，40% 隨機 1~100
+        const boundary = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        baseNum = Math.random() < 0.6 ? boundary[randInt(0, boundary.length - 1)] : randInt(1, 100);
+      }
+
+      const answer = isPlus ? baseNum + 1 : baseNum - 1;
+      const actionWord = isPlus ? '多 1 粒' : '少 1 粒';
+      const nums = generateDistractors(answer);
+
+      return {
+        type: 'C',
+        badge: '題型三 • 多1少1',
+        displayBlocks: baseNum,
+        answer: answer,
+        promptText: `畫面有 ${baseNum} 粒，「${actionWord}」是多少粒？`,
+        speakText: `畫面有 ${numberToChinese(baseNum)} 粒，${actionWord}是多少粒？`,
+        options: nums.map(n => ({
+          value: n,
+          label: `${n}`,
+          subLabel: `讀作${numberToChinese(n)}`
+        })),
+        hintOnWrong: isPlus
+          ? `想想看：${baseNum} 再多 1 粒，個位滿 10 粒就會變成新的一條喔！`
+          : `想想看：${baseNum} 少 1 粒，要拆開 1 條拿走 1 粒，還剩多少？`
+      };
+    }
+
+    /**
+     * ==================== 遊戲流程控制 ====================
+     */
+    function startGame(selectedMode) {
+      gameState.mode = selectedMode;
+      gameState.qIndex = 0;
+      gameState.stars = 0;
+      gameState.locked = false;
+
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('victory-modal').classList.add('hidden');
+      playTone('pop');
+      loadNextQuestion();
+    }
+
+    function restartSameMode() {
+      startGame(gameState.mode);
+    }
+
+    function returnToMenu() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      document.getElementById('victory-modal').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+    }
+
+    function loadNextQuestion() {
+      gameState.locked = false;
+      gameState.builderTens = 0;
+      gameState.builderOnes = 0;
+      gameState.builderHistory = [];
+
+      // 決定本題類型
+      let subType = gameState.mode;
+      if (subType === 'MIX') {
+        const types = ['A', 'B', 'C'];
+        subType = types[gameState.qIndex % 3];
+      }
+
+      gameState.currentQ = createQuestion(subType);
+      renderGameScreen();
+      speakCurrentQuestion();
+    }
+
+    function speakCurrentQuestion() {
+      if (gameState.currentQ) {
+        speakCantonese(gameState.currentQ.speakText);
+      }
+    }
+
+    /**
+     * ==================== 積木繪製與畫面更新 ====================
+     */
+    function renderBlocks(tens, ones, animateLast = false) {
+      const tensContainer = document.getElementById('tens-container');
+      const col1 = document.getElementById('ones-col-1');
+      const col2 = document.getElementById('ones-col-2');
+      const emptyHint = document.getElementById('stage-empty-hint');
+
+      tensContainer.innerHTML = '';
+      col1.innerHTML = '';
+      col2.innerHTML = '';
+
+      const total = tens * 10 + ones;
+      emptyHint.classList.toggle('hidden', total !== 0);
+
+      for (let t = 0; t < tens; t++) {
+        const rod = document.createElement('div');
+        rod.className = 'ten-rod';
+        if (animateLast && t === tens - 1 && ones === 0) {
+          rod.classList.add('animate-pop-in');
+        }
+        for (let i = 0; i < 10; i++) {
+          const c = document.createElement('div');
+          c.className = 'cube';
+          rod.appendChild(c);
+        }
+        tensContainer.appendChild(rod);
+      }
+
+      for (let o = 1; o <= ones; o++) {
+        const c = document.createElement('div');
+        c.className = 'cube';
+        if (animateLast && o === ones) {
+          c.classList.add('animate-pop-in');
+        }
+        if (o <= 5) col1.appendChild(c);
+        else col2.appendChild(c);
+      }
+    }
+
+    function updateStarsBar() {
+      document.getElementById('q-progress-text').textContent = `第 ${gameState.qIndex + 1} / ${TOTAL_QUESTIONS} 題`;
+      const bar = document.getElementById('stars-bar');
+      let html = '';
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        html += i < gameState.stars ? '<span class="animate-pop-in inline-block">⭐</span>' : '<span class="text-slate-300">☆</span>';
+      }
+      bar.innerHTML = html;
+    }
+
+    function setFeedback(text, status = 'neutral') {
+      const el = document.getElementById('feedback-text');
+      el.textContent = text;
+      el.className = 'text-xs sm:text-base font-black px-4 py-1 rounded-full transition ';
+      if (status === 'correct') {
+        el.className += 'bg-emerald-100 text-emerald-700 animate-pop-in';
+      } else if (status === 'wrong') {
+        el.className += 'bg-rose-100 text-rose-700 animate-shake';
+      } else {
+        el.className += 'text-slate-400';
+      }
+    }
+
+    function renderGameScreen() {
+      const q = gameState.currentQ;
+      updateStarsBar();
+
+      document.getElementById('question-badge').textContent = q.badge;
+      document.getElementById('question-text').textContent = q.promptText;
+      setFeedback('請在下方操作區作答喔！👇', 'neutral');
+
+      const choicesPanel = document.getElementById('choices-panel');
+      const builderPanel = document.getElementById('builder-panel');
+      const builderPill = document.getElementById('builder-counter-pill');
+
+      if (q.type === 'A' || q.type === 'C') {
+        // 顯示 4 個選擇題按鈕
+        choicesPanel.classList.remove('hidden');
+        builderPanel.classList.add('hidden');
+        builderPill.classList.add('hidden');
+        document.getElementById('empty-hint-text').textContent = '目前是 0 粒（一粒也沒有）';
+
+        const t = Math.floor(q.displayBlocks / 10);
+        const o = q.displayBlocks % 10;
+        renderBlocks(t, o, false);
+
+        const colors = [
+          'from-sky-100 to-sky-200 border-sky-400 text-sky-950',
+          'from-emerald-100 to-emerald-200 border-emerald-400 text-emerald-950',
+          'from-amber-100 to-amber-200 border-amber-400 text-amber-950',
+          'from-purple-100 to-purple-200 border-purple-400 text-purple-950'
+        ];
+
+        choicesPanel.innerHTML = '';
+        q.options.forEach((opt, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `macaron-btn rounded-3xl bg-gradient-to-b ${colors[idx % 4]} border-3 flex flex-col items-center justify-center p-2`;
+          btn.innerHTML = `
+            <span class="text-2xl sm:text-4xl font-black tracking-wide">${opt.label}</span>
+            ${opt.subLabel ? `<span class="text-[11px] sm:text-xs font-bold opacity-75 mt-0.5">${opt.subLabel}</span>` : ''}
+          `;
+          btn.onclick = () => handleChoiceAnswer(opt.value, btn);
+          choicesPanel.appendChild(btn);
+        });
+
+      } else {
+        // 題型 B：顯示動手拿積木控制器
+        choicesPanel.classList.add('hidden');
+        builderPanel.classList.remove('hidden');
+        builderPill.classList.remove('hidden');
+        document.getElementById('empty-hint-text').textContent = '請點擊下方「➕ 1 條」或「➕ 1 粒」拿積木';
+        updateBuilderView(false);
+      }
+    }
+
+    /**
+     * ==================== 作答處理：選擇題 (題型 A & C) ====================
+     */
+    function handleChoiceAnswer(selectedValue, btnEl) {
+      if (gameState.locked) return;
+      const q = gameState.currentQ;
+
+      if (selectedValue === q.answer) {
+        gameState.locked = true;
+        gameState.stars += 1;
+        updateStarsBar();
+        playTone('correct');
+        btnEl.classList.add('ring-4', 'ring-emerald-400', 'scale-105');
+        const cn = numberToChinese(q.answer);
+        setFeedback(`🎉 答對了！答案就是 ${q.answer}（讀作${cn}）！`, 'correct');
+        speakCantonese(`答對了！好叻呀！答案就是${cn}`);
+
+        setTimeout(() => {
+          advanceOrFinish();
+        }, 1600);
+      } else {
+        playTone('wrong');
+        btnEl.disabled = true;
+        btnEl.classList.add('animate-shake');
+        setFeedback(`💡 再想一想：${q.hintOnWrong}`, 'wrong');
+        speakCantonese('差一點點，再數一次試試看！');
+      }
+    }
+
+    /**
+     * ==================== 作答處理：動手拿積木 (題型 B) ====================
+     */
+    function updateBuilderView(animateLast) {
+      document.getElementById('builder-tens-count').textContent = gameState.builderTens;
+      document.getElementById('builder-ones-count').textContent = gameState.builderOnes;
+      renderBlocks(gameState.builderTens, gameState.builderOnes, animateLast);
+    }
+
+    function builderAddTen() {
+      if (gameState.locked) return;
+      const total = gameState.builderTens * 10 + gameState.builderOnes;
+      if (total + 10 > 100) {
+        playTone('wrong');
+        setFeedback('⚠️ 超過 100 粒啦，不能再加 1 條囉！', 'wrong');
+        return;
+      }
+      gameState.builderTens += 1;
+      gameState.builderHistory.push('ten');
+      playTone('pop');
+      updateBuilderView(true);
+    }
+
+    function builderAddOne() {
+      if (gameState.locked) return;
+      const total = gameState.builderTens * 10 + gameState.builderOnes;
+      if (total + 1 > 100) {
+        playTone('wrong');
+        setFeedback('⚠️ 已經是 100 粒啦！', 'wrong');
+        return;
+      }
+      // 滿 10 粒自動整齊進位成 1 條，保持視覺整潔
+      if (gameState.builderOnes === 9) {
+        gameState.builderTens += 1;
+        gameState.builderOnes = 0;
+        gameState.builderHistory.push('one');
+        playTone('correct');
+        setFeedback('✨ 滿 10 粒自動合成 1 條啦！', 'neutral');
+      } else {
+        gameState.builderOnes += 1;
+        gameState.builderHistory.push('one');
+        playTone('pop');
+      }
+      updateBuilderView(true);
+    }
+
+    function builderUndoOne() {
+      if (gameState.locked || gameState.builderHistory.length === 0) return;
+      const last = gameState.builderHistory.pop();
+      if (last === 'ten') {
+        gameState.builderTens = Math.max(0, gameState.builderTens - 1);
+      } else {
+        if (gameState.builderOnes > 0) {
+          gameState.builderOnes -= 1;
+        } else if (gameState.builderTens > 0) {
+          gameState.builderTens -= 1;
+          gameState.builderOnes = 9;
+        }
+      }
+      playTone('pop');
+      updateBuilderView(false);
+    }
+
+    function builderClear() {
+      if (gameState.locked) return;
+      gameState.builderTens = 0;
+      gameState.builderOnes = 0;
+      gameState.builderHistory = [];
+      playTone('pop');
+      updateBuilderView(false);
+      setFeedback('已清空，請重新拿積木吧！', 'neutral');
+    }
+
+    function submitBuilderAnswer() {
+      if (gameState.locked) return;
+      const q = gameState.currentQ;
+      const builtTotal = gameState.builderTens * 10 + gameState.builderOnes;
+
+      if (builtTotal === q.answer) {
+        gameState.locked = true;
+        gameState.stars += 1;
+        updateStarsBar();
+        playTone('correct');
+        const cn = numberToChinese(q.answer);
+        setFeedback(`🎉 完全正確！你拿出了 ${gameState.builderTens} 條和 ${gameState.builderOnes} 粒（${cn}）！`, 'correct');
+        speakCantonese(`完全正確！好犀利呀，你拿出了${cn}！`);
+
+        setTimeout(() => {
+          advanceOrFinish();
+        }, 1700);
+      } else {
+        playTone('wrong');
+        setFeedback(`你現在拿了 ${builtTotal} 粒（${gameState.builderTens} 條 ${gameState.builderOnes} 粒）。${q.hintOnWrong}`, 'wrong');
+        speakCantonese(`你現在拿了${numberToChinese(builtTotal)}粒，再調整一下試試看！`);
+      }
+    }
+
+    function advanceOrFinish() {
+      if (gameState.qIndex + 1 < TOTAL_QUESTIONS) {
+        gameState.qIndex += 1;
+        loadNextQuestion();
+      } else {
+        playTone('fanfare');
+        document.getElementById('victory-modal').classList.remove('hidden');
+        speakCantonese('恭喜你闖關成功！收集了全部五顆星星，真是太厲害了！');
+      }
+    }
+  </script>
+</body>
+</html>
